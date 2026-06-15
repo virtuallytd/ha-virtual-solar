@@ -1,0 +1,65 @@
+# Virtual Solar profiles
+#
+# Each profile prefills the config-flow wizard with a sensible set of defaults
+# for a real-world solar + battery kit. Users still pick their lux and house
+# consumption sensors themselves.
+#
+# To contribute a new profile:
+#   1. Append a new block at the bottom of this file.
+#   2. Fill in the fields below (all optional except `id` and `name`).
+#   3. Open a PR against https://github.com/virtuallytd/ha-virtual-solar.
+#
+# Profile fields:
+#   id                       lower_snake_case identifier, must be unique
+#   name                     human-readable name shown in the dropdown
+#   description              optional short description shown under the name
+#   battery_capacity_kwh     usable storage capacity (kWh)
+#   max_charge_rate_w        max watts the battery can absorb (W)
+#   max_discharge_rate_w     max watts the battery / inverter can supply (W)
+#   panel_wattage            rated wattage of a single panel (W)
+#   panel_count              default number of panels
+#   system_efficiency_pct    inverter + wiring + thermal losses combined (%)
+
+- id: custom
+  name: "Custom (no preset)"
+  description: "Start with empty defaults; fill everything in manually."
+
+- id: anker_solix_solarbank_3_e2700_pro
+  name: "Anker SOLIX SOLARBANK 3 E2700 Pro"
+  description: "Single Anker module, 1200 W inverter, 1 to 4 panels."
+  battery_capacity_kwh: 2.68
+  max_charge_rate_w: 1200
+  max_discharge_rate_w: 1200
+  panel_wattage: 500
+  panel_count: 1
+  system_efficiency_pct: 95
+
+- id: ecoflow_delta_2
+  name: "EcoFlow DELTA 2"
+  description: "Portable 1 kWh power station with solar input."
+  battery_capacity_kwh: 1.024
+  max_charge_rate_w: 500
+  max_discharge_rate_w: 1800
+  panel_wattage: 400
+  panel_count: 1
+  system_efficiency_pct: 92
+
+- id: generic_balcony_800w
+  name: "Generic 800 W balcony solar (DE)"
+  description: "Plug-in micro-inverter capped at 800 W per DE regulations."
+  battery_capacity_kwh: 1.0
+  max_charge_rate_w: 800
+  max_discharge_rate_w: 800
+  panel_wattage: 400
+  panel_count: 2
+  system_efficiency_pct: 93
+
+- id: generic_5kw_rooftop
+  name: "Generic 5 kW residential rooftop"
+  description: "Hybrid inverter, larger battery, rooftop array."
+  battery_capacity_kwh: 10
+  max_charge_rate_w: 5000
+  max_discharge_rate_w: 5000
+  panel_wattage: 400
+  panel_count: 12
+  system_efficiency_pct: 95

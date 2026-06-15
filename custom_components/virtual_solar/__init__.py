@@ -14,7 +14,15 @@ from homeassistant.core import (
 )
 from homeassistant.exceptions import HomeAssistantError
 
-from .const import CONF_MAX_CHARGE_RATE, DEFAULT_MAX_CHARGE_RATE, DOMAIN
+from .const import (
+    CONF_MAX_CHARGE_RATE,
+    CONF_MAX_DISCHARGE_RATE,
+    CONF_SYSTEM_EFFICIENCY,
+    DEFAULT_MAX_CHARGE_RATE,
+    DEFAULT_MAX_DISCHARGE_RATE,
+    DEFAULT_SYSTEM_EFFICIENCY,
+    DOMAIN,
+)
 from .dashboard import build_dashboard, dashboard_yaml
 
 PLATFORMS: list[Platform] = [Platform.NUMBER, Platform.SENSOR]
@@ -37,11 +45,20 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Migrate an existing config entry to the current schema."""
-    if entry.version == 1:
-        data = {**entry.data}
+    data = {**entry.data}
+    version = entry.version
+    if version == 1:
         data.pop("battery_level_sensor", None)
         data.setdefault(CONF_MAX_CHARGE_RATE, DEFAULT_MAX_CHARGE_RATE)
-        hass.config_entries.async_update_entry(entry, data=data, version=2)
+        version = 2
+    if version == 2:
+        # v3 splits charge/discharge and adds system efficiency.
+        existing_rate = data.get(CONF_MAX_CHARGE_RATE, DEFAULT_MAX_CHARGE_RATE)
+        data.setdefault(CONF_MAX_DISCHARGE_RATE, existing_rate)
+        data.setdefault(CONF_SYSTEM_EFFICIENCY, DEFAULT_SYSTEM_EFFICIENCY)
+        version = 3
+    if version != entry.version:
+        hass.config_entries.async_update_entry(entry, data=data, version=version)
     return True
 
 

@@ -7,6 +7,7 @@ from typing import Any
 import yaml
 
 from .const import (
+    BATTERY_CAPACITY_ENTITY_ID,
     BATTERY_LEVEL_ENTITY_ID,
     CHARGE_RATE_ENTITY_ID,
     CONF_BATTERY_CAPACITY,
@@ -19,6 +20,7 @@ from .const import (
     PANEL_WATTAGE_ENTITY_ID,
     PERCENTAGE_ENTITY_ID,
     STATUS_ENTITY_ID,
+    SYSTEM_EFFICIENCY_ENTITY_ID,
     TIME_TO_FULL_ENTITY_ID,
 )
 
@@ -94,7 +96,7 @@ def build_dashboard(config: dict[str, Any]) -> dict[str, Any]:
                     },
                     {
                         "type": "entities",
-                        "title": f"Battery (capacity {capacity:g} kWh)",
+                        "title": "Battery",
                         "entities": [
                             {"entity": PERCENTAGE_ENTITY_ID, "name": "Charge Level"},
                             {
@@ -105,11 +107,15 @@ def build_dashboard(config: dict[str, Any]) -> dict[str, Any]:
                                 "entity": TIME_TO_FULL_ENTITY_ID,
                                 "name": "Time to Full",
                             },
+                            {
+                                "entity": BATTERY_CAPACITY_ENTITY_ID,
+                                "name": "Capacity",
+                            },
                         ],
                     },
                     {
                         "type": "entities",
-                        "title": "Solar Panel Setup",
+                        "title": "Simulation",
                         "entities": [
                             {
                                 "entity": PANEL_WATTAGE_ENTITY_ID,
@@ -120,6 +126,11 @@ def build_dashboard(config: dict[str, Any]) -> dict[str, Any]:
                                 "entity": PANEL_COUNT_ENTITY_ID,
                                 "name": "Number of panels",
                                 "icon": "mdi:solar-panel-large",
+                            },
+                            {
+                                "entity": SYSTEM_EFFICIENCY_ENTITY_ID,
+                                "name": "System efficiency",
+                                "icon": "mdi:gauge",
                             },
                         ],
                     },

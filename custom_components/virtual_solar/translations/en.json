@@ -2,6 +2,13 @@
   "config": {
     "step": {
       "user": {
+        "title": "Pick a profile",
+        "description": "Start from a preset for a known kit, or choose Custom to fill everything in manually. You can change every value after setup.",
+        "data": {
+          "profile": "Profile"
+        }
+      },
+      "sensors": {
         "title": "Sensors",
         "description": "Pick the sensors that drive the simulation.",
         "data": {
@@ -11,7 +18,7 @@
       },
       "panel": {
         "title": "Solar panels",
-        "description": "Describe the panels you want to simulate.",
+        "description": "Initial values for the panel sliders. You can edit them live from the dashboard later.",
         "data": {
           "panel_wattage": "Rated wattage of one panel (W)",
           "panel_count": "Number of panels"
@@ -19,10 +26,12 @@
       },
       "battery": {
         "title": "Virtual battery",
-        "description": "Storage that charges from solar and discharges through house consumption.",
+        "description": "Storage and inverter specs.",
         "data": {
           "battery_capacity": "Battery capacity (kWh)",
-          "max_charge_rate": "Max charge/discharge rate (W)"
+          "max_charge_rate": "Max charge rate (W)",
+          "max_discharge_rate": "Max discharge rate (W)",
+          "system_efficiency": "System efficiency (%)"
         }
       }
     },
@@ -40,7 +49,7 @@
     "step": {
       "init": {
         "title": "Sensors",
-        "description": "Pick the sensors that drive the simulation. Panel wattage and count are now live, edit them from the dashboard.",
+        "description": "Pick the sensors that drive the simulation. Panel count, panel wattage, battery capacity and system efficiency are now live, edit them from the dashboard.",
         "data": {
           "lux_sensor": "Ambient light sensor (lux)",
           "house_consumption_sensor": "Whole-house power consumption sensor"
@@ -48,10 +57,12 @@
       },
       "battery": {
         "title": "Virtual battery",
-        "description": "Storage that charges from solar and discharges through house consumption.",
+        "description": "Storage and inverter specs.",
         "data": {
           "battery_capacity": "Battery capacity (kWh)",
-          "max_charge_rate": "Max charge/discharge rate (W)"
+          "max_charge_rate": "Max charge rate (W)",
+          "max_discharge_rate": "Max discharge rate (W)",
+          "system_efficiency": "System efficiency (%)"
         }
       }
     }

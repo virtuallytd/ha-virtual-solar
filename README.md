@@ -9,15 +9,29 @@ and it produces live solar output and battery status entities.
 ## What it does
 
 - **Estimates solar panel output** from an ambient light (lux) reading using
-  the well-known sunlight relationship `1 W/m² ≈ 120 lux`, scaled to the
-  panel wattage and count you configure.
-- **Reports virtual battery status** (Charging / Discharging / Full / Empty)
-  based on the current solar estimate, your house consumption, and a battery
-  level sensor of your choice (typically an `input_number` helper updated by
-  an automation).
+  the sunlight approximation `1 W/m² ≈ 120 lux`, scaled to panel wattage,
+  count, and system efficiency.
+- **Simulates a virtual battery** that charges and discharges over time based
+  on solar input minus house consumption, capped at configurable charge and
+  discharge rates.
+- **Reports a friendly status** (Charging / Discharging / Full / Empty) and
+  derived metrics (battery %, net flow, time-to-full).
 
-Both sensors update reactively. The moment the lux sensor or house
-consumption changes, the entities recalculate. No polling.
+Everything updates reactively. The battery ticks once a minute and survives
+HA restarts.
+
+## Profiles
+
+The setup wizard's first step lets you pick from preset kits in
+[`custom_components/virtual_solar/profiles.yaml`](custom_components/virtual_solar/profiles.yaml).
+Today: Anker SOLIX SOLARBANK 3 E2700 Pro, EcoFlow DELTA 2, a generic 800 W
+balcony kit, a generic 5 kW rooftop, and Custom. Each profile prefills the
+panel and battery defaults; you can still override anything before
+finishing setup, and you can adjust live values via the dashboard sliders
+afterwards.
+
+**Adding a profile** is a one-block YAML append in that file. See the
+inline comments for the schema. PRs welcome.
 
 ## Installation
 
@@ -41,40 +55,51 @@ consumption changes, the entities recalculate. No polling.
 
 ## Configuration
 
-All configuration is done through the UI. The setup wizard has three steps:
+All configuration is done through the UI. The setup wizard has four steps:
 
-### Step 1: Sensors
+### Step 1: Profile
+
+A dropdown of preset kits. Pick one to prefill the next steps, or "Custom"
+to fill everything manually.
+
+### Step 2: Sensors
 
 | Field | What to pick |
 |---|---|
 | **Ambient light sensor** | A `sensor` entity with `device_class: illuminance`, reporting lux. Outdoor sensors give the best results. |
 | **House consumption sensor** | A `sensor` entity with `device_class: power`, reporting your whole-house instantaneous draw in W. |
 
-### Step 2: Solar panels
+### Step 3: Solar panels
 
 | Field | Range | Default |
 |---|---|---|
 | **Panel wattage (W)** | 100 – 800, step 10 | 500 |
 | **Number of panels** | 1 – 20, step 1 | 1 |
 
-### Step 3: Virtual battery
+### Step 4: Virtual battery
 
 | Field | Range | Default |
 |---|---|---|
-| **Battery capacity (kWh)** | 0.1 – 30, step 0.01 | 2.68 |
-| **Max charge/discharge rate (W)** | 100 – 10000, step 50 | 1200 (matches the Anker SOLIX inverter) |
+| **Battery capacity (kWh)** | 0.1 – 100, step 0.01 | 2.68 |
+| **Max charge rate (W)** | 100 – 15000, step 50 | 1200 |
+| **Max discharge rate (W)** | 100 – 15000, step 50 | 1200 |
+| **System efficiency (%)** | 50 – 100, step 1 | 95 |
 
-All of these are editable post-install via the **Configure** button on the
-integration card.
+After install, the **Configure** dialog only edits sensors and battery/inverter
+specs (charge rate, discharge rate, efficiency, capacity). Panel count, panel
+wattage, battery capacity, and system efficiency are also live-editable as
+sliders on the dashboard, so you don't need to open Configure to tweak them.
 
 ## Entities produced
 
 | Entity ID | Unit | Notes |
 |---|---|---|
-| `sensor.virtual_solar_estimated_output` | W | `device_class: power`, `state_class: measurement`. Updates whenever the lux sensor, panel count, or panel wattage changes. |
-| `number.virtual_solar_panel_count` | (none) | How many panels to simulate (1 – 20). Set from the wizard, live-editable via the dashboard slider. Drives `estimated_output`. |
-| `number.virtual_solar_panel_wattage` | W | Rated wattage of a single panel (100 – 800). Set from the wizard, live-editable via the dashboard slider. Drives `estimated_output`. |
-| `number.virtual_solar_battery_level` | kWh | The virtual battery's current stored energy. Self-updates every minute. User-editable, so you can manually reset it to 0 or full. Survives HA restarts. |
+| `sensor.virtual_solar_estimated_output` | W | `device_class: power`, `state_class: measurement`. Updates whenever lux, panel count, panel wattage, or system efficiency changes. |
+| `number.virtual_solar_panel_count` | (none) | How many panels to simulate (1 – 20). Live-editable via the dashboard slider. Drives `estimated_output`. |
+| `number.virtual_solar_panel_wattage` | W | Rated wattage of a single panel (100 – 800). Live-editable. Drives `estimated_output`. |
+| `number.virtual_solar_battery_capacity` | kWh | Total battery capacity (0.1 – 100). Live-editable. The battery level slider auto-resizes when you change it. |
+| `number.virtual_solar_system_efficiency` | % | Combined inverter + wiring + thermal losses (50 – 100). Live-editable. Applied as a multiplier on solar output before any other calculation. |
+| `number.virtual_solar_battery_level` | kWh | The virtual battery's current stored energy. Ticks every minute. User-editable for manual resets. Survives HA restarts. |
 | `sensor.virtual_solar_battery_percentage` | % | `device_class: battery`. `(level / capacity) * 100` with a dynamic icon that tracks charge level. |
 | `sensor.virtual_solar_battery_charge_rate` | W | `device_class: power`. Net flow into (positive) or out of (negative) the battery, clamped at the configured max rate. Icon flips between `mdi:battery-arrow-up` and `mdi:battery-arrow-down`. |
 | `sensor.virtual_solar_battery_time_to_full` | n/a | Human-readable countdown like `2h 15m`, or `Full` / `No solar input` when those apply. |
@@ -194,17 +219,16 @@ The integration owns `number.virtual_solar_battery_level` and ticks it
 every minute:
 
 ```
-net_W      = solar_output − house_consumption
-net_W      = clamp(net_W, −max_rate, +max_rate)
-ΔkWh       = net_W × (60s / 3600s) / 1000
-new_level  = clamp(current + ΔkWh, 0, capacity)
+raw_solar   = (lux / 120) × panel_wattage × panel_count / 1000
+solar       = raw_solar × system_efficiency
+net_W       = solar − house_consumption
+net_W       = clamp(net_W, −max_discharge_rate, +max_charge_rate)
+ΔkWh        = net_W × (60s / 3600s) / 1000
+new_level   = clamp(current + ΔkWh, 0, capacity)
 ```
 
-You don't need any helpers or automations. The number entity is
-user-editable, so you can override the level from the UI at any time
-(handy for resetting to 0 to simulate a depleted start, or to capacity
-to test the "Full" state). Restarts persist the level via
-`RestoreEntity`.
+The slider is user-editable, so you can manually reset to 0 (depleted) or
+capacity (full) any time. Restarts persist the level via `RestoreEntity`.
 
 ## Notes & caveats
 
@@ -213,8 +237,9 @@ to test the "Full" state). Restarts persist the level via
   panel's angle is ideal.
 - The `1 W/m² ≈ 120 lux` constant is an approximation. Expect ±20% versus
   reality, more in winter and at low sun angles.
-- Panel temperature derating, inverter losses, and panel degradation aren't
-  modelled. This is a planning tool, not a yield estimator.
+- System efficiency lumps inverter, wiring, and thermal losses into a single
+  multiplier. Panel temperature derating and panel degradation aren't
+  modelled separately. This is a planning tool, not a yield estimator.
 
 ## License
 
