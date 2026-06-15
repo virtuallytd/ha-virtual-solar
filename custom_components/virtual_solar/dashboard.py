@@ -26,7 +26,11 @@ from .const import (
 
 
 def build_dashboard(config: dict[str, Any]) -> dict[str, Any]:
-    """Return a Lovelace dashboard config populated from a config entry."""
+    """Return a Lovelace dashboard config populated from a config entry.
+
+    Output matches the storage-mode raw-config format: just `views:` at
+    the top, no `title:` (set via the UI), no `path:` (auto-slugged).
+    """
     lux = config[CONF_LUX_SENSOR]
     house = config[CONF_HOUSE_CONSUMPTION_SENSOR]
     panel_wattage = float(config[CONF_PANEL_WATTAGE])
@@ -35,11 +39,9 @@ def build_dashboard(config: dict[str, Any]) -> dict[str, Any]:
     max_output = max(int(panel_wattage * panel_count), 100)
 
     return {
-        "title": "Solar",
         "views": [
             {
                 "title": "Solar",
-                "path": "solar",
                 "icon": "mdi:solar-panel",
                 "cards": [
                     {
@@ -157,7 +159,6 @@ def build_dashboard(config: dict[str, Any]) -> dict[str, Any]:
                         "type": "history-graph",
                         "title": "Solar & Battery Flow (7 days)",
                         "hours_to_show": 168,
-                        "refresh_interval": 300,
                         "entities": [
                             {"entity": OUTPUT_ENTITY_ID, "name": "Solar Output (W)"},
                             {
@@ -172,11 +173,24 @@ def build_dashboard(config: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+class _IndentingDumper(yaml.SafeDumper):
+    """SafeDumper that indents list items under their parent key.
+
+    Produces the standard `parent:\n  - item` form that HA's raw config
+    editor expects, instead of the default `parent:\n- item`.
+    """
+
+    def increase_indent(self, flow: bool = False, indentless: bool = False) -> None:
+        return super().increase_indent(flow=flow, indentless=False)
+
+
 def dashboard_yaml(config: dict[str, Any]) -> str:
     """Serialise the dashboard config to a YAML string."""
-    return yaml.safe_dump(
+    return yaml.dump(
         build_dashboard(config),
+        Dumper=_IndentingDumper,
         default_flow_style=False,
         sort_keys=False,
         allow_unicode=True,
+        indent=2,
     )

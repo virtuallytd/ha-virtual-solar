@@ -3,6 +3,19 @@
 All notable changes to this project are documented here. Release notes
 are also published on the [GitHub Releases page](https://github.com/virtuallytd/ha-virtual-solar/releases).
 
+## 0.4.2 (2026-06-15)
+
+**Fixed**: `virtual_solar.get_dashboard` now produces YAML that the HA
+Raw configuration editor accepts cleanly.
+
+- Drops the top-level `title:` (storage-mode dashboards set their title
+  via the UI, and the validator rejected the extra key as
+  `views: undefined`).
+- Drops `path:` on the view (storage mode auto-slugs).
+- Drops the deprecated `refresh_interval:` from history-graph cards.
+- Indents list items under their parent key so the output matches the
+  format HA's editor expects.
+
 ## 0.4.1 (2026-06-15)
 
 Docs-only release.
