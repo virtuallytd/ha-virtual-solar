@@ -24,8 +24,10 @@ def device_info(entry: ConfigEntry) -> DeviceInfo:
     return DeviceInfo(
         identifiers={(DOMAIN, entry.entry_id)},
         name="Virtual Solar",
-        manufacturer="Virtual Solar",
+        manufacturer="Anthony Davis",
+        model="Virtual Solar",
         entry_type=DeviceEntryType.SERVICE,
+        configuration_url="https://github.com/virtuallytd/ha-virtual-solar",
     )
 
 
