@@ -1,0 +1,61 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Sensors",
+        "description": "Pick the sensors that drive the simulation.",
+        "data": {
+          "lux_sensor": "Ambient light sensor (lux)",
+          "house_consumption_sensor": "Whole-house power consumption sensor"
+        }
+      },
+      "panel": {
+        "title": "Solar panels",
+        "description": "Describe the panels you want to simulate.",
+        "data": {
+          "panel_wattage": "Rated wattage of one panel (W)",
+          "panel_count": "Number of panels"
+        }
+      },
+      "battery": {
+        "title": "Virtual battery",
+        "description": "Storage that charges from solar and discharges through house consumption.",
+        "data": {
+          "battery_capacity": "Battery capacity (kWh)",
+          "battery_level_sensor": "Current battery level sensor (kWh)"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Virtual Solar is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Sensors",
+        "description": "Pick the sensors that drive the simulation.",
+        "data": {
+          "lux_sensor": "Ambient light sensor (lux)",
+          "house_consumption_sensor": "Whole-house power consumption sensor"
+        }
+      },
+      "panel": {
+        "title": "Solar panels",
+        "description": "Describe the panels you want to simulate.",
+        "data": {
+          "panel_wattage": "Rated wattage of one panel (W)",
+          "panel_count": "Number of panels"
+        }
+      },
+      "battery": {
+        "title": "Virtual battery",
+        "description": "Storage that charges from solar and discharges through house consumption.",
+        "data": {
+          "battery_capacity": "Battery capacity (kWh)",
+          "battery_level_sensor": "Current battery level sensor (kWh)"
+        }
+      }
+    }
+  }
+}
