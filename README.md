@@ -241,6 +241,12 @@ capacity (full) any time. Restarts persist the level via `RestoreEntity`.
   multiplier. Panel temperature derating and panel degradation aren't
   modelled separately. This is a planning tool, not a yield estimator.
 
+## More docs
+
+- [CHANGELOG.md](CHANGELOG.md): version history.
+- [CONTRIBUTING.md](CONTRIBUTING.md): how to add a profile or contribute code.
+- [docs/profiles.md](docs/profiles.md): profile schema reference.
+
 ## License
 
-MIT
+[MIT](LICENSE).
