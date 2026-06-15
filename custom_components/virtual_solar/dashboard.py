@@ -8,21 +8,23 @@ import yaml
 
 from .const import (
     BATTERY_LEVEL_ENTITY_ID,
+    CHARGE_RATE_ENTITY_ID,
     CONF_BATTERY_CAPACITY,
     CONF_HOUSE_CONSUMPTION_SENSOR,
     CONF_LUX_SENSOR,
     CONF_PANEL_COUNT,
     CONF_PANEL_WATTAGE,
+    OUTPUT_ENTITY_ID,
     PANEL_COUNT_ENTITY_ID,
     PANEL_WATTAGE_ENTITY_ID,
+    PERCENTAGE_ENTITY_ID,
+    STATUS_ENTITY_ID,
+    TIME_TO_FULL_ENTITY_ID,
 )
-
-OUTPUT_SENSOR = "sensor.virtual_solar_estimated_output"
-STATUS_SENSOR = "sensor.virtual_solar_battery_status"
 
 
 def build_dashboard(config: dict[str, Any]) -> dict[str, Any]:
-    """Return a dashboard config dict populated with entities from the config entry."""
+    """Return a Lovelace dashboard config populated from a config entry."""
     lux = config[CONF_LUX_SENSOR]
     house = config[CONF_HOUSE_CONSUMPTION_SENSOR]
     panel_wattage = float(config[CONF_PANEL_WATTAGE])
@@ -40,7 +42,7 @@ def build_dashboard(config: dict[str, Any]) -> dict[str, Any]:
                 "cards": [
                     {
                         "type": "gauge",
-                        "entity": OUTPUT_SENSOR,
+                        "entity": OUTPUT_ENTITY_ID,
                         "name": "Estimated Solar Output",
                         "min": 0,
                         "max": max_output,
@@ -53,20 +55,16 @@ def build_dashboard(config: dict[str, Any]) -> dict[str, Any]:
                     },
                     {
                         "type": "gauge",
-                        "entity": BATTERY_LEVEL_ENTITY_ID,
+                        "entity": PERCENTAGE_ENTITY_ID,
                         "name": "Battery Level",
                         "min": 0,
-                        "max": capacity,
+                        "max": 100,
                         "needle": True,
-                        "severity": {
-                            "green": capacity * 0.6,
-                            "yellow": capacity * 0.2,
-                            "red": 0,
-                        },
+                        "severity": {"green": 60, "yellow": 20, "red": 0},
                     },
                     {
                         "type": "entity",
-                        "entity": STATUS_SENSOR,
+                        "entity": STATUS_ENTITY_ID,
                         "name": "Battery Status",
                     },
                     {
@@ -74,7 +72,7 @@ def build_dashboard(config: dict[str, Any]) -> dict[str, Any]:
                         "title": "Current Status",
                         "entities": [
                             {
-                                "entity": OUTPUT_SENSOR,
+                                "entity": OUTPUT_ENTITY_ID,
                                 "name": "Solar Output",
                                 "icon": "mdi:solar-panel",
                             },
@@ -84,14 +82,28 @@ def build_dashboard(config: dict[str, Any]) -> dict[str, Any]:
                                 "icon": "mdi:home-lightning-bolt",
                             },
                             {
-                                "entity": BATTERY_LEVEL_ENTITY_ID,
-                                "name": "Stored Energy",
-                                "icon": "mdi:battery",
+                                "entity": CHARGE_RATE_ENTITY_ID,
+                                "name": "Net Battery Flow",
                             },
                             {
                                 "entity": lux,
                                 "name": "Light Level",
                                 "icon": "mdi:brightness-5",
+                            },
+                        ],
+                    },
+                    {
+                        "type": "entities",
+                        "title": f"Battery (capacity {capacity:g} kWh)",
+                        "entities": [
+                            {"entity": PERCENTAGE_ENTITY_ID, "name": "Charge Level"},
+                            {
+                                "entity": BATTERY_LEVEL_ENTITY_ID,
+                                "name": "Energy Stored",
+                            },
+                            {
+                                "entity": TIME_TO_FULL_ENTITY_ID,
+                                "name": "Time to Full",
                             },
                         ],
                     },
@@ -116,19 +128,30 @@ def build_dashboard(config: dict[str, Any]) -> dict[str, Any]:
                         "title": "Solar Output (24h)",
                         "hours_to_show": 24,
                         "entities": [
-                            {"entity": OUTPUT_SENSOR, "name": "Estimated Output (W)"},
+                            {"entity": OUTPUT_ENTITY_ID, "name": "Estimated Output (W)"},
                         ],
                     },
                     {
                         "type": "history-graph",
-                        "title": "Solar & Battery (7 days)",
+                        "title": "Battery Level (24h)",
+                        "hours_to_show": 24,
+                        "entities": [
+                            {
+                                "entity": BATTERY_LEVEL_ENTITY_ID,
+                                "name": "Energy Stored (kWh)",
+                            },
+                        ],
+                    },
+                    {
+                        "type": "history-graph",
+                        "title": "Solar & Battery Flow (7 days)",
                         "hours_to_show": 168,
                         "refresh_interval": 300,
                         "entities": [
-                            {"entity": OUTPUT_SENSOR, "name": "Solar Output (W)"},
+                            {"entity": OUTPUT_ENTITY_ID, "name": "Solar Output (W)"},
                             {
-                                "entity": BATTERY_LEVEL_ENTITY_ID,
-                                "name": "Stored Energy (kWh)",
+                                "entity": CHARGE_RATE_ENTITY_ID,
+                                "name": "Net Battery Flow (W)",
                             },
                         ],
                     },

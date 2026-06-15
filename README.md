@@ -75,7 +75,10 @@ integration card.
 | `number.virtual_solar_panel_count` | (none) | How many panels to simulate (1 – 20). Set from the wizard, live-editable via the dashboard slider. Drives `estimated_output`. |
 | `number.virtual_solar_panel_wattage` | W | Rated wattage of a single panel (100 – 800). Set from the wizard, live-editable via the dashboard slider. Drives `estimated_output`. |
 | `number.virtual_solar_battery_level` | kWh | The virtual battery's current stored energy. Self-updates every minute. User-editable, so you can manually reset it to 0 or full. Survives HA restarts. |
-| `sensor.virtual_solar_battery_status` | n/a | Enum: `Charging`, `Discharging`, `Full`, `Empty`. Icon updates to match (`mdi:battery-charging`, `mdi:battery-minus`, `mdi:battery-check`, `mdi:battery-alert`). |
+| `sensor.virtual_solar_battery_percentage` | % | `device_class: battery`. `(level / capacity) * 100` with a dynamic icon that tracks charge level. |
+| `sensor.virtual_solar_battery_charge_rate` | W | `device_class: power`. Net flow into (positive) or out of (negative) the battery, clamped at the configured max rate. Icon flips between `mdi:battery-arrow-up` and `mdi:battery-arrow-down`. |
+| `sensor.virtual_solar_battery_time_to_full` | n/a | Human-readable countdown like `2h 15m`, or `Full` / `No solar input` when those apply. |
+| `sensor.virtual_solar_battery_status` | n/a | Enum: `Charging`, `Discharging`, `Full`, `Empty`. Action wins over condition (a 0% battery being charged shows `Charging`). Icon updates to match. |
 
 Battery status rules (action takes precedence over condition):
 

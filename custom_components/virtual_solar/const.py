@@ -21,6 +21,11 @@ TICK_INTERVAL_SECONDS = 60
 BATTERY_LEVEL_ENTITY_ID = "number.virtual_solar_battery_level"
 PANEL_COUNT_ENTITY_ID = "number.virtual_solar_panel_count"
 PANEL_WATTAGE_ENTITY_ID = "number.virtual_solar_panel_wattage"
+OUTPUT_ENTITY_ID = "sensor.virtual_solar_estimated_output"
+STATUS_ENTITY_ID = "sensor.virtual_solar_battery_status"
+PERCENTAGE_ENTITY_ID = "sensor.virtual_solar_battery_percentage"
+CHARGE_RATE_ENTITY_ID = "sensor.virtual_solar_battery_charge_rate"
+TIME_TO_FULL_ENTITY_ID = "sensor.virtual_solar_battery_time_to_full"
 
 STATE_CHARGING = "Charging"
 STATE_DISCHARGING = "Discharging"
