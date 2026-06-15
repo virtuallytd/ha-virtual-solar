@@ -77,11 +77,11 @@ integration card.
 | `number.virtual_solar_battery_level` | kWh | The virtual battery's current stored energy. Self-updates every minute. User-editable, so you can manually reset it to 0 or full. Survives HA restarts. |
 | `sensor.virtual_solar_battery_status` | n/a | Enum: `Charging`, `Discharging`, `Full`, `Empty`. Icon updates to match (`mdi:battery-charging`, `mdi:battery-minus`, `mdi:battery-check`, `mdi:battery-alert`). |
 
-Battery status rules:
+Battery status rules (action takes precedence over condition):
 
-- `< 5%` of capacity → **Empty**
-- `>= 99%` of capacity → **Full**
-- `solar_output > house_consumption` → **Charging**
+- `solar > house` and capacity reached (`>= 99%`) → **Full**
+- `solar > house` → **Charging**
+- `solar <= house` and battery near empty (`< 5%`) → **Empty**
 - Otherwise → **Discharging**
 
 ## Sample dashboard

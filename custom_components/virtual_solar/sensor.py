@@ -150,15 +150,20 @@ class BatteryStatusSensor(SensorEntity):
             if (level is not None and self._capacity > 0)
             else None
         )
+        charging = (
+            solar is not None and house is not None and solar > house
+        )
 
-        if pct is not None and pct < 5:
-            state, icon = STATE_EMPTY, "mdi:battery-alert"
-        elif pct is not None and pct >= 99:
-            state, icon = STATE_FULL, "mdi:battery-check"
-        elif solar is not None and house is not None and solar > house:
-            state, icon = STATE_CHARGING, "mdi:battery-charging"
+        if charging:
+            if pct is not None and pct >= 99:
+                state, icon = STATE_FULL, "mdi:battery-check"
+            else:
+                state, icon = STATE_CHARGING, "mdi:battery-charging"
         else:
-            state, icon = STATE_DISCHARGING, "mdi:battery-minus"
+            if pct is not None and pct < 5:
+                state, icon = STATE_EMPTY, "mdi:battery-alert"
+            else:
+                state, icon = STATE_DISCHARGING, "mdi:battery-minus"
 
         self._attr_native_value = state
         self._attr_icon = icon
