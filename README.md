@@ -104,14 +104,71 @@ the service to get a fresh YAML.
 
 ### Option B: static template
 
-If you'd rather paste a fixed YAML and edit the entity IDs by hand, use
-[`dashboards/solar.yaml`](dashboards/solar.yaml). Search for `REPLACE_LUX`,
-`REPLACE_HOUSE`, `REPLACE_LEVEL` and swap in your entity IDs.
+If you'd rather paste a fixed YAML and edit the entity IDs by hand, copy
+the YAML below into a new dashboard's Raw configuration editor and search
+for `REPLACE_LUX`, `REPLACE_HOUSE`, `REPLACE_LEVEL`, then swap each one
+for the entity ID you picked during the integration config flow.
 
-The static template also ships with a few optional cards commented out
-that depend on extra `input_number` helpers and template sensors (battery
-percentage, charge rate, time-to-full) which aren't part of this
-integration. Uncomment them once you've set those up.
+```yaml
+title: Solar
+views:
+  - title: Solar
+    path: solar
+    icon: mdi:solar-panel
+    cards:
+      - type: gauge
+        entity: sensor.virtual_solar_estimated_output
+        name: Estimated Solar Output
+        min: 0
+        max: 2000 # raise to (panel_wattage * panel_count) for your setup
+        needle: true
+        severity:
+          green: 500
+          yellow: 150
+          red: 0
+
+      - type: entity
+        entity: sensor.virtual_solar_battery_status
+        name: Battery Status
+
+      - type: entities
+        title: Current Status
+        entities:
+          - entity: sensor.virtual_solar_estimated_output
+            name: Solar Output
+            icon: mdi:solar-panel
+          - entity: REPLACE_HOUSE # your house consumption sensor
+            name: House Consumption
+            icon: mdi:home-lightning-bolt
+          - entity: REPLACE_LEVEL # your battery level helper (kWh)
+            name: Stored Energy
+            icon: mdi:battery
+          - entity: REPLACE_LUX # your lux sensor
+            name: Light Level
+            icon: mdi:brightness-5
+
+      - type: history-graph
+        title: Solar Output (24h)
+        hours_to_show: 24
+        entities:
+          - entity: sensor.virtual_solar_estimated_output
+            name: Estimated Output (W)
+
+      - type: history-graph
+        title: Solar & Battery (7 days)
+        hours_to_show: 168
+        refresh_interval: 300
+        entities:
+          - entity: sensor.virtual_solar_estimated_output
+            name: Solar Output (W)
+          - entity: REPLACE_LEVEL # battery level helper (kWh)
+            name: Stored Energy (kWh)
+```
+
+A few extra cards (battery percentage gauge, charge rate, time-to-full)
+that depend on additional `input_number` helpers and template sensors
+described in the companion blog post aren't shown here. Add them once you
+have those helpers set up.
 
 ## How the battery level moves
 
