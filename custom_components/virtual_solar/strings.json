@@ -40,18 +40,10 @@
     "step": {
       "init": {
         "title": "Sensors",
-        "description": "Pick the sensors that drive the simulation.",
+        "description": "Pick the sensors that drive the simulation. Panel wattage and count are now live, edit them from the dashboard.",
         "data": {
           "lux_sensor": "Ambient light sensor (lux)",
           "house_consumption_sensor": "Whole-house power consumption sensor"
-        }
-      },
-      "panel": {
-        "title": "Solar panels",
-        "description": "Describe the panels you want to simulate.",
-        "data": {
-          "panel_wattage": "Rated wattage of one panel (W)",
-          "panel_count": "Number of panels"
         }
       },
       "battery": {

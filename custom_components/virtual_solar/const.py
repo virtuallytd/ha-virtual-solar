@@ -19,6 +19,8 @@ STC_IRRADIANCE = 1000.0
 TICK_INTERVAL_SECONDS = 60
 
 BATTERY_LEVEL_ENTITY_ID = "number.virtual_solar_battery_level"
+PANEL_COUNT_ENTITY_ID = "number.virtual_solar_panel_count"
+PANEL_WATTAGE_ENTITY_ID = "number.virtual_solar_panel_wattage"
 
 STATE_CHARGING = "Charging"
 STATE_DISCHARGING = "Discharging"

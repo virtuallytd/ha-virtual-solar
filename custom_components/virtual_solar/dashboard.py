@@ -13,6 +13,8 @@ from .const import (
     CONF_LUX_SENSOR,
     CONF_PANEL_COUNT,
     CONF_PANEL_WATTAGE,
+    PANEL_COUNT_ENTITY_ID,
+    PANEL_WATTAGE_ENTITY_ID,
 )
 
 OUTPUT_SENSOR = "sensor.virtual_solar_estimated_output"
@@ -90,6 +92,22 @@ def build_dashboard(config: dict[str, Any]) -> dict[str, Any]:
                                 "entity": lux,
                                 "name": "Light Level",
                                 "icon": "mdi:brightness-5",
+                            },
+                        ],
+                    },
+                    {
+                        "type": "entities",
+                        "title": "Solar Panel Setup",
+                        "entities": [
+                            {
+                                "entity": PANEL_WATTAGE_ENTITY_ID,
+                                "name": "Panel wattage (W)",
+                                "icon": "mdi:solar-panel",
+                            },
+                            {
+                                "entity": PANEL_COUNT_ENTITY_ID,
+                                "name": "Number of panels",
+                                "icon": "mdi:solar-panel-large",
                             },
                         ],
                     },

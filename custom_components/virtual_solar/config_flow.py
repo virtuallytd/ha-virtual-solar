@@ -180,19 +180,9 @@ class VirtualSolarOptionsFlow(config_entries.OptionsFlow):
     ) -> FlowResult:
         if user_input is not None:
             self._data.update(user_input)
-            return await self.async_step_panel()
-        return self.async_show_form(
-            step_id="init", data_schema=_sensors_schema(self._defaults())
-        )
-
-    async def async_step_panel(
-        self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
-        if user_input is not None:
-            self._data.update(user_input)
             return await self.async_step_battery()
         return self.async_show_form(
-            step_id="panel", data_schema=_panel_schema(self._defaults())
+            step_id="init", data_schema=_sensors_schema(self._defaults())
         )
 
     async def async_step_battery(

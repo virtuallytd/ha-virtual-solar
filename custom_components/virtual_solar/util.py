@@ -8,7 +8,15 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.device_registry import DeviceEntryType
 from homeassistant.helpers.entity import DeviceInfo
 
-from .const import DOMAIN, LUX_PER_WM2, STC_IRRADIANCE
+from homeassistant.core import HomeAssistant
+
+from .const import (
+    DOMAIN,
+    LUX_PER_WM2,
+    PANEL_COUNT_ENTITY_ID,
+    PANEL_WATTAGE_ENTITY_ID,
+    STC_IRRADIANCE,
+)
 
 
 def safe_float(value: Any) -> float | None:
@@ -37,3 +45,21 @@ def estimate_output(
     if lux is None:
         return None
     return (lux / LUX_PER_WM2) * (panel_wattage * panel_count / STC_IRRADIANCE)
+
+
+def read_panel_config(
+    hass: HomeAssistant, fallback_wattage: float, fallback_count: float
+) -> tuple[float, float]:
+    """Return (panel_wattage, panel_count) from the number entities.
+
+    Falls back to the supplied defaults whenever the corresponding entity
+    state isn't available yet (happens briefly during platform setup).
+    """
+    wattage_state = hass.states.get(PANEL_WATTAGE_ENTITY_ID)
+    count_state = hass.states.get(PANEL_COUNT_ENTITY_ID)
+    wattage = safe_float(wattage_state.state) if wattage_state else None
+    count = safe_float(count_state.state) if count_state else None
+    return (
+        wattage if wattage is not None else fallback_wattage,
+        count if count is not None else fallback_count,
+    )

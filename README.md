@@ -71,7 +71,9 @@ integration card.
 
 | Entity ID | Unit | Notes |
 |---|---|---|
-| `sensor.virtual_solar_estimated_output` | W | `device_class: power`, `state_class: measurement`. Updates whenever the lux sensor changes. |
+| `sensor.virtual_solar_estimated_output` | W | `device_class: power`, `state_class: measurement`. Updates whenever the lux sensor, panel count, or panel wattage changes. |
+| `number.virtual_solar_panel_count` | (none) | How many panels to simulate (1 – 4). Set from the wizard, live-editable via the dashboard slider. Drives `estimated_output`. |
+| `number.virtual_solar_panel_wattage` | W | Rated wattage of a single panel (100 – 800). Set from the wizard, live-editable via the dashboard slider. Drives `estimated_output`. |
 | `number.virtual_solar_battery_level` | kWh | The virtual battery's current stored energy. Self-updates every minute. User-editable, so you can manually reset it to 0 or full. Survives HA restarts. |
 | `sensor.virtual_solar_battery_status` | n/a | Enum: `Charging`, `Discharging`, `Full`, `Empty`. Icon updates to match (`mdi:battery-charging`, `mdi:battery-minus`, `mdi:battery-check`, `mdi:battery-alert`). |
 
@@ -154,6 +156,16 @@ views:
           - entity: REPLACE_LUX # your lux sensor
             name: Light Level
             icon: mdi:brightness-5
+
+      - type: entities
+        title: Solar Panel Setup
+        entities:
+          - entity: number.virtual_solar_panel_wattage
+            name: Panel wattage (W)
+            icon: mdi:solar-panel
+          - entity: number.virtual_solar_panel_count
+            name: Number of panels
+            icon: mdi:solar-panel-large
 
       - type: history-graph
         title: Solar Output (24h)

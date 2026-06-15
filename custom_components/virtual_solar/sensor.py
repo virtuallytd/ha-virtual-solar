@@ -22,12 +22,14 @@ from .const import (
     CONF_LUX_SENSOR,
     CONF_PANEL_COUNT,
     CONF_PANEL_WATTAGE,
+    PANEL_COUNT_ENTITY_ID,
+    PANEL_WATTAGE_ENTITY_ID,
     STATE_CHARGING,
     STATE_DISCHARGING,
     STATE_EMPTY,
     STATE_FULL,
 )
-from .util import device_info, estimate_output, safe_float
+from .util import device_info, estimate_output, read_panel_config, safe_float
 
 
 async def async_setup_entry(
@@ -57,8 +59,8 @@ class SolarOutputSensor(SensorEntity):
     def __init__(self, entry: ConfigEntry, config: dict[str, Any]) -> None:
         self._entry = entry
         self._lux_entity: str = config[CONF_LUX_SENSOR]
-        self._panel_wattage = float(config[CONF_PANEL_WATTAGE])
-        self._panel_count = float(config[CONF_PANEL_COUNT])
+        self._fallback_wattage = float(config[CONF_PANEL_WATTAGE])
+        self._fallback_count = float(config[CONF_PANEL_COUNT])
         self._attr_unique_id = f"{entry.entry_id}_estimated_output"
         self._attr_device_info = device_info(entry)
         self._attr_native_value: float | None = None
@@ -66,7 +68,13 @@ class SolarOutputSensor(SensorEntity):
     async def async_added_to_hass(self) -> None:
         self.async_on_remove(
             async_track_state_change_event(
-                self.hass, [self._lux_entity], self._handle_change
+                self.hass,
+                [
+                    self._lux_entity,
+                    PANEL_WATTAGE_ENTITY_ID,
+                    PANEL_COUNT_ENTITY_ID,
+                ],
+                self._handle_change,
             )
         )
         self._recalculate()
@@ -80,7 +88,10 @@ class SolarOutputSensor(SensorEntity):
     def _recalculate(self) -> None:
         state = self.hass.states.get(self._lux_entity)
         lux = safe_float(state.state) if state else None
-        watts = estimate_output(lux, self._panel_wattage, self._panel_count)
+        wattage, count = read_panel_config(
+            self.hass, self._fallback_wattage, self._fallback_count
+        )
+        watts = estimate_output(lux, wattage, count)
         self._attr_native_value = None if watts is None else round(watts, 1)
 
 
@@ -95,8 +106,8 @@ class BatteryStatusSensor(SensorEntity):
         self._entry = entry
         self._lux_entity: str = config[CONF_LUX_SENSOR]
         self._house_entity: str = config[CONF_HOUSE_CONSUMPTION_SENSOR]
-        self._panel_wattage = float(config[CONF_PANEL_WATTAGE])
-        self._panel_count = float(config[CONF_PANEL_COUNT])
+        self._fallback_wattage = float(config[CONF_PANEL_WATTAGE])
+        self._fallback_count = float(config[CONF_PANEL_COUNT])
         self._capacity = float(config[CONF_BATTERY_CAPACITY])
         self._attr_unique_id = f"{entry.entry_id}_battery_status"
         self._attr_device_info = device_info(entry)
@@ -107,7 +118,13 @@ class BatteryStatusSensor(SensorEntity):
         self.async_on_remove(
             async_track_state_change_event(
                 self.hass,
-                [self._lux_entity, self._house_entity, BATTERY_LEVEL_ENTITY_ID],
+                [
+                    self._lux_entity,
+                    self._house_entity,
+                    BATTERY_LEVEL_ENTITY_ID,
+                    PANEL_WATTAGE_ENTITY_ID,
+                    PANEL_COUNT_ENTITY_ID,
+                ],
                 self._handle_change,
             )
         )
@@ -123,7 +140,10 @@ class BatteryStatusSensor(SensorEntity):
         lux = self._read(self._lux_entity)
         house = self._read(self._house_entity)
         level = self._read(BATTERY_LEVEL_ENTITY_ID)
-        solar = estimate_output(lux, self._panel_wattage, self._panel_count)
+        wattage, count = read_panel_config(
+            self.hass, self._fallback_wattage, self._fallback_count
+        )
+        solar = estimate_output(lux, wattage, count)
 
         pct = (
             (level / self._capacity * 100.0)
