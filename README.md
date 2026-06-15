@@ -55,7 +55,7 @@ All configuration is done through the UI. The setup wizard has three steps:
 | Field | Range | Default |
 |---|---|---|
 | **Panel wattage (W)** | 100 – 800, step 10 | 500 |
-| **Number of panels** | 1 – 4, step 1 | 1 |
+| **Number of panels** | 1 – 20, step 1 | 1 |
 
 ### Step 3: Virtual battery
 
@@ -72,7 +72,7 @@ integration card.
 | Entity ID | Unit | Notes |
 |---|---|---|
 | `sensor.virtual_solar_estimated_output` | W | `device_class: power`, `state_class: measurement`. Updates whenever the lux sensor, panel count, or panel wattage changes. |
-| `number.virtual_solar_panel_count` | (none) | How many panels to simulate (1 – 4). Set from the wizard, live-editable via the dashboard slider. Drives `estimated_output`. |
+| `number.virtual_solar_panel_count` | (none) | How many panels to simulate (1 – 20). Set from the wizard, live-editable via the dashboard slider. Drives `estimated_output`. |
 | `number.virtual_solar_panel_wattage` | W | Rated wattage of a single panel (100 – 800). Set from the wizard, live-editable via the dashboard slider. Drives `estimated_output`. |
 | `number.virtual_solar_battery_level` | kWh | The virtual battery's current stored energy. Self-updates every minute. User-editable, so you can manually reset it to 0 or full. Survives HA restarts. |
 | `sensor.virtual_solar_battery_status` | n/a | Enum: `Charging`, `Discharging`, `Full`, `Empty`. Icon updates to match (`mdi:battery-charging`, `mdi:battery-minus`, `mdi:battery-check`, `mdi:battery-alert`). |
