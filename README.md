@@ -62,16 +62,17 @@ All configuration is done through the UI. The setup wizard has three steps:
 | Field | Range | Default |
 |---|---|---|
 | **Battery capacity (kWh)** | 0.1 – 30, step 0.01 | 2.68 |
-| **Battery level sensor** | Any `sensor` (or `input_number`) reporting current stored energy in kWh | (none) |
+| **Max charge/discharge rate (W)** | 100 – 10000, step 50 | 1200 (matches the Anker SOLIX inverter) |
 
 All of these are editable post-install via the **Configure** button on the
 integration card.
 
-## Sensors produced
+## Entities produced
 
 | Entity ID | Unit | Notes |
 |---|---|---|
 | `sensor.virtual_solar_estimated_output` | W | `device_class: power`, `state_class: measurement`. Updates whenever the lux sensor changes. |
+| `number.virtual_solar_battery_level` | kWh | The virtual battery's current stored energy. Self-updates every minute. User-editable, so you can manually reset it to 0 or full. Survives HA restarts. |
 | `sensor.virtual_solar_battery_status` | n/a | Enum: `Charging`, `Discharging`, `Full`, `Empty`. Icon updates to match (`mdi:battery-charging`, `mdi:battery-minus`, `mdi:battery-check`, `mdi:battery-alert`). |
 
 Battery status rules:
@@ -105,9 +106,9 @@ the service to get a fresh YAML.
 ### Option B: static template
 
 If you'd rather paste a fixed YAML and edit the entity IDs by hand, copy
-the YAML below into a new dashboard's Raw configuration editor and search
-for `REPLACE_LUX`, `REPLACE_HOUSE`, `REPLACE_LEVEL`, then swap each one
-for the entity ID you picked during the integration config flow.
+the YAML below into a new dashboard's Raw configuration editor and
+search for `REPLACE_LUX` and `REPLACE_HOUSE`, then swap each one for the
+entity ID you picked during the integration config flow.
 
 ```yaml
 title: Solar
@@ -127,6 +128,13 @@ views:
           yellow: 150
           red: 0
 
+      - type: gauge
+        entity: number.virtual_solar_battery_level
+        name: Battery Level
+        min: 0
+        max: 2.68 # raise to your configured capacity
+        needle: true
+
       - type: entity
         entity: sensor.virtual_solar_battery_status
         name: Battery Status
@@ -140,7 +148,7 @@ views:
           - entity: REPLACE_HOUSE # your house consumption sensor
             name: House Consumption
             icon: mdi:home-lightning-bolt
-          - entity: REPLACE_LEVEL # your battery level helper (kWh)
+          - entity: number.virtual_solar_battery_level
             name: Stored Energy
             icon: mdi:battery
           - entity: REPLACE_LUX # your lux sensor
@@ -161,22 +169,27 @@ views:
         entities:
           - entity: sensor.virtual_solar_estimated_output
             name: Solar Output (W)
-          - entity: REPLACE_LEVEL # battery level helper (kWh)
+          - entity: number.virtual_solar_battery_level
             name: Stored Energy (kWh)
 ```
 
-A few extra cards (battery percentage gauge, charge rate, time-to-full)
-that depend on additional `input_number` helpers and template sensors
-described in the companion blog post aren't shown here. Add them once you
-have those helpers set up.
-
 ## How the battery level moves
 
-This integration does **not** modify the battery level sensor itself. It
-only reads it. To drive it, create an `input_number` helper and an
-automation that updates it every few minutes from the difference between
-solar output and house consumption. A full worked example is on the blog
-post that goes with this integration.
+The integration owns `number.virtual_solar_battery_level` and ticks it
+every minute:
+
+```
+net_W      = solar_output − house_consumption
+net_W      = clamp(net_W, −max_rate, +max_rate)
+ΔkWh       = net_W × (60s / 3600s) / 1000
+new_level  = clamp(current + ΔkWh, 0, capacity)
+```
+
+You don't need any helpers or automations. The number entity is
+user-editable, so you can override the level from the UI at any time
+(handy for resetting to 0 to simulate a depleted start, or to capacity
+to test the "Full" state). Restarts persist the level via
+`RestoreEntity`.
 
 ## Notes & caveats
 

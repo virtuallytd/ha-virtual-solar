@@ -12,26 +12,22 @@ from homeassistant.components.sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfPower
 from homeassistant.core import Event, EventStateChangedData, HomeAssistant, callback
-from homeassistant.helpers.device_registry import DeviceEntryType
-from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_state_change_event
 
 from .const import (
+    BATTERY_LEVEL_ENTITY_ID,
     CONF_BATTERY_CAPACITY,
-    CONF_BATTERY_LEVEL_SENSOR,
     CONF_HOUSE_CONSUMPTION_SENSOR,
     CONF_LUX_SENSOR,
     CONF_PANEL_COUNT,
     CONF_PANEL_WATTAGE,
-    DOMAIN,
-    LUX_PER_WM2,
     STATE_CHARGING,
     STATE_DISCHARGING,
     STATE_EMPTY,
     STATE_FULL,
-    STC_IRRADIANCE,
 )
+from .util import device_info, estimate_output, safe_float
 
 
 async def async_setup_entry(
@@ -44,30 +40,6 @@ async def async_setup_entry(
     async_add_entities(
         [SolarOutputSensor(entry, config), BatteryStatusSensor(entry, config)]
     )
-
-
-def _safe_float(value: Any) -> float | None:
-    if value in (None, "unknown", "unavailable", ""):
-        return None
-    try:
-        return float(value)
-    except (TypeError, ValueError):
-        return None
-
-
-def _device_info(entry: ConfigEntry) -> DeviceInfo:
-    return DeviceInfo(
-        identifiers={(DOMAIN, entry.entry_id)},
-        name="Virtual Solar",
-        manufacturer="Virtual Solar",
-        entry_type=DeviceEntryType.SERVICE,
-    )
-
-
-def _estimate_output(lux: float | None, panel_w: float, panel_count: float) -> float | None:
-    if lux is None:
-        return None
-    return (lux / LUX_PER_WM2) * (panel_w * panel_count / STC_IRRADIANCE)
 
 
 class SolarOutputSensor(SensorEntity):
@@ -88,7 +60,7 @@ class SolarOutputSensor(SensorEntity):
         self._panel_wattage = float(config[CONF_PANEL_WATTAGE])
         self._panel_count = float(config[CONF_PANEL_COUNT])
         self._attr_unique_id = f"{entry.entry_id}_estimated_output"
-        self._attr_device_info = _device_info(entry)
+        self._attr_device_info = device_info(entry)
         self._attr_native_value: float | None = None
 
     async def async_added_to_hass(self) -> None:
@@ -107,8 +79,8 @@ class SolarOutputSensor(SensorEntity):
     @callback
     def _recalculate(self) -> None:
         state = self.hass.states.get(self._lux_entity)
-        lux = _safe_float(state.state) if state else None
-        watts = _estimate_output(lux, self._panel_wattage, self._panel_count)
+        lux = safe_float(state.state) if state else None
+        watts = estimate_output(lux, self._panel_wattage, self._panel_count)
         self._attr_native_value = None if watts is None else round(watts, 1)
 
 
@@ -123,12 +95,11 @@ class BatteryStatusSensor(SensorEntity):
         self._entry = entry
         self._lux_entity: str = config[CONF_LUX_SENSOR]
         self._house_entity: str = config[CONF_HOUSE_CONSUMPTION_SENSOR]
-        self._level_entity: str = config[CONF_BATTERY_LEVEL_SENSOR]
         self._panel_wattage = float(config[CONF_PANEL_WATTAGE])
         self._panel_count = float(config[CONF_PANEL_COUNT])
         self._capacity = float(config[CONF_BATTERY_CAPACITY])
         self._attr_unique_id = f"{entry.entry_id}_battery_status"
-        self._attr_device_info = _device_info(entry)
+        self._attr_device_info = device_info(entry)
         self._attr_native_value: str | None = None
         self._attr_icon = "mdi:battery"
 
@@ -136,7 +107,7 @@ class BatteryStatusSensor(SensorEntity):
         self.async_on_remove(
             async_track_state_change_event(
                 self.hass,
-                [self._lux_entity, self._house_entity, self._level_entity],
+                [self._lux_entity, self._house_entity, BATTERY_LEVEL_ENTITY_ID],
                 self._handle_change,
             )
         )
@@ -151,10 +122,14 @@ class BatteryStatusSensor(SensorEntity):
     def _recalculate(self) -> None:
         lux = self._read(self._lux_entity)
         house = self._read(self._house_entity)
-        level = self._read(self._level_entity)
-        solar = _estimate_output(lux, self._panel_wattage, self._panel_count)
+        level = self._read(BATTERY_LEVEL_ENTITY_ID)
+        solar = estimate_output(lux, self._panel_wattage, self._panel_count)
 
-        pct = (level / self._capacity * 100.0) if (level is not None and self._capacity > 0) else None
+        pct = (
+            (level / self._capacity * 100.0)
+            if (level is not None and self._capacity > 0)
+            else None
+        )
 
         if pct is not None and pct < 5:
             state, icon = STATE_EMPTY, "mdi:battery-alert"
@@ -170,4 +145,4 @@ class BatteryStatusSensor(SensorEntity):
 
     def _read(self, entity_id: str) -> float | None:
         state = self.hass.states.get(entity_id)
-        return _safe_float(state.state) if state else None
+        return safe_float(state.state) if state else None

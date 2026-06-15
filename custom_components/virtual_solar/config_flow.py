@@ -12,12 +12,13 @@ from homeassistant.helpers import selector
 
 from .const import (
     CONF_BATTERY_CAPACITY,
-    CONF_BATTERY_LEVEL_SENSOR,
     CONF_HOUSE_CONSUMPTION_SENSOR,
     CONF_LUX_SENSOR,
+    CONF_MAX_CHARGE_RATE,
     CONF_PANEL_COUNT,
     CONF_PANEL_WATTAGE,
     DEFAULT_BATTERY_CAPACITY,
+    DEFAULT_MAX_CHARGE_RATE,
     DEFAULT_PANEL_COUNT,
     DEFAULT_PANEL_WATTAGE,
     DOMAIN,
@@ -103,10 +104,18 @@ def _battery_schema(defaults: dict[str, Any]) -> vol.Schema:
                 ),
             ),
             vol.Required(
-                CONF_BATTERY_LEVEL_SENSOR,
-                default=_with_default(CONF_BATTERY_LEVEL_SENSOR, defaults),
-            ): selector.EntitySelector(
-                selector.EntitySelectorConfig(domain="sensor"),
+                CONF_MAX_CHARGE_RATE,
+                default=_with_default(
+                    CONF_MAX_CHARGE_RATE, defaults, DEFAULT_MAX_CHARGE_RATE
+                ),
+            ): selector.NumberSelector(
+                selector.NumberSelectorConfig(
+                    min=100,
+                    max=10000,
+                    step=50,
+                    unit_of_measurement="W",
+                    mode=selector.NumberSelectorMode.BOX,
+                ),
             ),
         }
     )
@@ -115,7 +124,7 @@ def _battery_schema(defaults: dict[str, Any]) -> vol.Schema:
 class VirtualSolarConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Initial setup flow."""
 
-    VERSION = 1
+    VERSION = 2
 
     def __init__(self) -> None:
         self._data: dict[str, Any] = {}

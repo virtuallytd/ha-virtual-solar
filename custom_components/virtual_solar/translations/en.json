@@ -22,7 +22,7 @@
         "description": "Storage that charges from solar and discharges through house consumption.",
         "data": {
           "battery_capacity": "Battery capacity (kWh)",
-          "battery_level_sensor": "Current battery level sensor (kWh)"
+          "max_charge_rate": "Max charge/discharge rate (W)"
         }
       }
     },
@@ -59,7 +59,7 @@
         "description": "Storage that charges from solar and discharges through house consumption.",
         "data": {
           "battery_capacity": "Battery capacity (kWh)",
-          "battery_level_sensor": "Current battery level sensor (kWh)"
+          "max_charge_rate": "Max charge/discharge rate (W)"
         }
       }
     }

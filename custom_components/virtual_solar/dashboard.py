@@ -7,7 +7,8 @@ from typing import Any
 import yaml
 
 from .const import (
-    CONF_BATTERY_LEVEL_SENSOR,
+    BATTERY_LEVEL_ENTITY_ID,
+    CONF_BATTERY_CAPACITY,
     CONF_HOUSE_CONSUMPTION_SENSOR,
     CONF_LUX_SENSOR,
     CONF_PANEL_COUNT,
@@ -22,9 +23,9 @@ def build_dashboard(config: dict[str, Any]) -> dict[str, Any]:
     """Return a dashboard config dict populated with entities from the config entry."""
     lux = config[CONF_LUX_SENSOR]
     house = config[CONF_HOUSE_CONSUMPTION_SENSOR]
-    level = config[CONF_BATTERY_LEVEL_SENSOR]
     panel_wattage = float(config[CONF_PANEL_WATTAGE])
     panel_count = float(config[CONF_PANEL_COUNT])
+    capacity = float(config[CONF_BATTERY_CAPACITY])
     max_output = max(int(panel_wattage * panel_count), 100)
 
     return {
@@ -49,6 +50,19 @@ def build_dashboard(config: dict[str, Any]) -> dict[str, Any]:
                         },
                     },
                     {
+                        "type": "gauge",
+                        "entity": BATTERY_LEVEL_ENTITY_ID,
+                        "name": "Battery Level",
+                        "min": 0,
+                        "max": capacity,
+                        "needle": True,
+                        "severity": {
+                            "green": capacity * 0.6,
+                            "yellow": capacity * 0.2,
+                            "red": 0,
+                        },
+                    },
+                    {
                         "type": "entity",
                         "entity": STATUS_SENSOR,
                         "name": "Battery Status",
@@ -68,7 +82,7 @@ def build_dashboard(config: dict[str, Any]) -> dict[str, Any]:
                                 "icon": "mdi:home-lightning-bolt",
                             },
                             {
-                                "entity": level,
+                                "entity": BATTERY_LEVEL_ENTITY_ID,
                                 "name": "Stored Energy",
                                 "icon": "mdi:battery",
                             },
@@ -94,7 +108,10 @@ def build_dashboard(config: dict[str, Any]) -> dict[str, Any]:
                         "refresh_interval": 300,
                         "entities": [
                             {"entity": OUTPUT_SENSOR, "name": "Solar Output (W)"},
-                            {"entity": level, "name": "Stored Energy (kWh)"},
+                            {
+                                "entity": BATTERY_LEVEL_ENTITY_ID,
+                                "name": "Stored Energy (kWh)",
+                            },
                         ],
                     },
                 ],

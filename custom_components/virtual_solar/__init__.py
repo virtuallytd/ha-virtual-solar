@@ -14,10 +14,10 @@ from homeassistant.core import (
 )
 from homeassistant.exceptions import HomeAssistantError
 
-from .const import DOMAIN
+from .const import CONF_MAX_CHARGE_RATE, DEFAULT_MAX_CHARGE_RATE, DOMAIN
 from .dashboard import build_dashboard, dashboard_yaml
 
-PLATFORMS: list[Platform] = [Platform.SENSOR]
+PLATFORMS: list[Platform] = [Platform.NUMBER, Platform.SENSOR]
 
 SERVICE_GET_DASHBOARD = "get_dashboard"
 
@@ -35,8 +35,18 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
 
+async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Migrate an existing config entry to the current schema."""
+    if entry.version == 1:
+        data = {**entry.data}
+        data.pop("battery_level_sensor", None)
+        data.setdefault(CONF_MAX_CHARGE_RATE, DEFAULT_MAX_CHARGE_RATE)
+        hass.config_entries.async_update_entry(entry, data=data, version=2)
+    return True
+
+
 async def _async_options_updated(hass: HomeAssistant, entry: ConfigEntry) -> None:
-    """Reload the entry whenever options change so sensors pick up new values."""
+    """Reload the entry whenever options change so entities pick up new values."""
     await hass.config_entries.async_reload(entry.entry_id)
 
 
