@@ -3,6 +3,16 @@
 All notable changes to this project are documented here. Release notes
 are also published on the [GitHub Releases page](https://github.com/virtuallytd/ha-virtual-solar/releases).
 
+## 0.4.1 (2026-06-15)
+
+Docs-only release.
+
+- Added [`LICENSE`](LICENSE) (MIT).
+- Added [`CHANGELOG.md`](CHANGELOG.md) with notes back to 0.1.0.
+- Added [`CONTRIBUTING.md`](CONTRIBUTING.md) covering profile contributions, local dev, and the release workflow.
+- Added [`docs/profiles.md`](docs/profiles.md) with the profile schema reference.
+- Linked the above from the README.
+
 ## 0.4.0 (2026-06-15)
 
 **Profiles**
