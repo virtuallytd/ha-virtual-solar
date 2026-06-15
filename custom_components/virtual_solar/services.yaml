@@ -1,0 +1,7 @@
+get_dashboard:
+  name: Get dashboard YAML
+  description: >
+    Returns a Lovelace dashboard config pre-populated with the lux, house
+    consumption, and battery level entities from your Virtual Solar config
+    entry. Copy the "yaml" field of the response into a new dashboard's
+    Raw configuration editor.
