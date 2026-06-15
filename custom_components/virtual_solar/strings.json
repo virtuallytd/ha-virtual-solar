@@ -42,7 +42,7 @@
   "services": {
     "get_dashboard": {
       "name": "Get dashboard YAML",
-      "description": "Returns a Lovelace dashboard config pre-populated with the entity IDs from your Virtual Solar config entry. Copy the response's `yaml` field into a new dashboard's Raw configuration editor."
+      "description": "Returns a Lovelace dashboard config pre-populated with the entity IDs from your Virtual Solar config entry. Copy the entire response and paste it into a new dashboard's Raw configuration editor."
     }
   },
   "options": {

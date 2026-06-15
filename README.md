@@ -118,20 +118,20 @@ There are two ways to get a Virtual Solar dashboard.
 
 ### Option A: auto-generated (recommended)
 
-The integration registers a service that builds a dashboard YAML using the
-entity IDs you picked in the config flow, so there's nothing to find-and-
-replace.
+The integration registers a service that builds a dashboard config using
+the entity IDs you picked in the config flow.
 
 1. **Developer Tools → Actions** (older HA: "Services").
 2. Select **Virtual Solar: Get dashboard YAML**.
-3. Click **Perform action**. The response panel shows a `yaml` field.
-4. Copy that string.
+3. Click **Perform action**. The response panel shows the dashboard
+   config starting with `views:`.
+4. Copy the **entire response** (everything from `views:` to the end).
 5. **Settings → Dashboards → Add Dashboard → New dashboard from scratch**.
 6. Open the new dashboard, **Edit dashboard** → 3-dot menu → **Raw
-   configuration editor** and paste.
+   configuration editor**, select all, and paste.
 
-If you change anything in the integration's **Configure** dialog, re-run
-the service to get a fresh YAML.
+If you change anything in the integration's **Configure** dialog or
+adjust a slider, re-run the service to regenerate.
 
 ### Option B: static template
 

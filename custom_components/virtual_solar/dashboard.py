@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from typing import Any
 
-import yaml
-
 from .const import (
     BATTERY_CAPACITY_ENTITY_ID,
     BATTERY_LEVEL_ENTITY_ID,
@@ -173,24 +171,3 @@ def build_dashboard(config: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-class _IndentingDumper(yaml.SafeDumper):
-    """SafeDumper that indents list items under their parent key.
-
-    Produces the standard `parent:\n  - item` form that HA's raw config
-    editor expects, instead of the default `parent:\n- item`.
-    """
-
-    def increase_indent(self, flow: bool = False, indentless: bool = False) -> None:
-        return super().increase_indent(flow=flow, indentless=False)
-
-
-def dashboard_yaml(config: dict[str, Any]) -> str:
-    """Serialise the dashboard config to a YAML string."""
-    return yaml.dump(
-        build_dashboard(config),
-        Dumper=_IndentingDumper,
-        default_flow_style=False,
-        sort_keys=False,
-        allow_unicode=True,
-        indent=2,
-    )

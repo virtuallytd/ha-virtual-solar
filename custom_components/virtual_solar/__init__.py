@@ -23,7 +23,7 @@ from .const import (
     DEFAULT_SYSTEM_EFFICIENCY,
     DOMAIN,
 )
-from .dashboard import build_dashboard, dashboard_yaml
+from .dashboard import build_dashboard
 
 PLATFORMS: list[Platform] = [Platform.NUMBER, Platform.SENSOR]
 
@@ -78,10 +78,10 @@ def _async_register_services(hass: HomeAssistant) -> None:
             raise HomeAssistantError("Virtual Solar is not configured.")
         entry = entries[0]
         config: dict[str, Any] = {**entry.data, **entry.options}
-        return {
-            "yaml": dashboard_yaml(config),
-            "config": build_dashboard(config),
-        }
+        # Return the dashboard config dict directly so the response shown in
+        # Developer Tools -> Actions IS the dashboard YAML, ready to paste
+        # into the Raw configuration editor without any field extraction.
+        return build_dashboard(config)
 
     hass.services.async_register(
         DOMAIN,

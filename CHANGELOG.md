@@ -3,6 +3,18 @@
 All notable changes to this project are documented here. Release notes
 are also published on the [GitHub Releases page](https://github.com/virtuallytd/ha-virtual-solar/releases).
 
+## 0.4.3 (2026-06-15)
+
+**Fixed**: `virtual_solar.get_dashboard` now returns the dashboard
+config directly instead of wrapping it under `yaml:` and `config:`
+fields. Previously, copying the entire service response into the Raw
+configuration editor produced `Your configuration is not valid: At
+path: views, Expected an array value, but received: undefined` because
+the validator saw `yaml:` and `config:` at the top instead of `views:`.
+
+The response panel now shows the dashboard YAML directly starting with
+`views:`. Copy the whole response, paste, save.
+
 ## 0.4.2 (2026-06-15)
 
 **Fixed**: `virtual_solar.get_dashboard` now produces YAML that the HA
