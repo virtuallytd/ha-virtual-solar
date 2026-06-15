@@ -81,6 +81,23 @@ Battery status rules:
 - `solar_output > house_consumption` → **Charging**
 - Otherwise → **Discharging**
 
+## Sample dashboard
+
+A starter Lovelace dashboard lives in [`dashboards/solar.yaml`](dashboards/solar.yaml).
+To use it:
+
+1. **Settings → Dashboards → Add Dashboard → New dashboard from scratch**.
+2. Open the new dashboard, **Edit dashboard**, then the 3-dot menu → **Raw configuration editor**.
+3. Paste the contents of `dashboards/solar.yaml`.
+4. Search the file for `REPLACE_` and swap in the entity IDs you picked
+   during the integration setup (lux sensor, house power sensor, battery
+   level helper).
+
+The dashboard ships with a few optional cards commented out at the bottom.
+Those depend on extra `input_number` helpers and template sensors (battery
+percentage, charge rate, time-to-full) that aren't part of this
+integration. Uncomment them once you've set those up.
+
 ## How the battery level moves
 
 This integration does **not** modify the battery level sensor itself. It

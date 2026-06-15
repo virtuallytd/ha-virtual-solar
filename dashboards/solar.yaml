@@ -1,0 +1,107 @@
+# Virtual Solar sample dashboard
+#
+# How to use this file:
+#   1. Settings -> Dashboards -> Add Dashboard -> New dashboard from scratch.
+#   2. Open the new dashboard, click the 3-dot menu (top right),
+#      "Edit dashboard", then 3-dot menu -> "Raw configuration editor".
+#   3. Paste the contents of this file.
+#
+# Two of the cards reference entities created by THIS integration:
+#   sensor.virtual_solar_estimated_output
+#   sensor.virtual_solar_battery_status
+#
+# Anywhere you see "REPLACE:" you need to swap in the entity ID from your
+# own setup. These are the same sensors / helpers you used (or will use)
+# during the integration config flow:
+#
+#   REPLACE_LUX     -- your lux sensor      (e.g. sensor.sensor_light_illuminance)
+#   REPLACE_HOUSE   -- your power sensor    (e.g. sensor.esphome_glow_power_consumption)
+#   REPLACE_LEVEL   -- battery level helper (e.g. input_number.virtual_battery_level)
+#
+# The "optional cards" section at the bottom assumes you've added the
+# helper entities and template sensors described in the companion blog
+# post. Delete that section if you haven't set those up.
+
+title: Solar
+views:
+  - title: Solar
+    path: solar
+    icon: mdi:solar-panel
+    cards:
+      - type: gauge
+        entity: sensor.virtual_solar_estimated_output
+        name: Estimated Solar Output
+        min: 0
+        max: 2000 # raise to (panel_wattage * panel_count) for your setup
+        needle: true
+        severity:
+          green: 500
+          yellow: 150
+          red: 0
+
+      - type: entity
+        entity: sensor.virtual_solar_battery_status
+        name: Battery Status
+
+      - type: entities
+        title: Current Status
+        entities:
+          - entity: sensor.virtual_solar_estimated_output
+            name: Solar Output
+            icon: mdi:solar-panel
+          - entity: REPLACE_HOUSE # your house consumption sensor
+            name: House Consumption
+            icon: mdi:home-lightning-bolt
+          - entity: REPLACE_LEVEL # your battery level helper (kWh)
+            name: Stored Energy
+            icon: mdi:battery
+          - entity: REPLACE_LUX # your lux sensor
+            name: Light Level
+            icon: mdi:brightness-5
+
+      - type: history-graph
+        title: Solar Output (24h)
+        hours_to_show: 24
+        entities:
+          - entity: sensor.virtual_solar_estimated_output
+            name: Estimated Output (W)
+
+      - type: history-graph
+        title: Solar & Battery (7 days)
+        hours_to_show: 168
+        refresh_interval: 300
+        entities:
+          - entity: sensor.virtual_solar_estimated_output
+            name: Solar Output (W)
+          - entity: REPLACE_LEVEL # battery level helper (kWh)
+            name: Stored Energy (kWh)
+
+      # ---- Optional cards (require helpers / template sensors from the
+      #      companion blog post). Delete if you haven't set those up. ----
+      #
+      # - type: gauge
+      #   entity: sensor.virtual_battery_percentage
+      #   name: Battery Level
+      #   min: 0
+      #   max: 100
+      #   needle: true
+      #   severity:
+      #     green: 60
+      #     yellow: 20
+      #     red: 0
+      #
+      # - type: entities
+      #   title: Battery
+      #   entities:
+      #     - entity: sensor.virtual_battery_percentage
+      #       name: Charge Level
+      #     - entity: sensor.virtual_battery_charge_rate
+      #       name: Net Battery Flow
+      #     - entity: sensor.virtual_battery_time_to_full
+      #       name: Time to Full
+      #       icon: mdi:clock-outline
+      #     - type: divider
+      #     - entity: input_number.virtual_battery_capacity
+      #       name: Battery Capacity (kWh)
+      #     - entity: input_number.virtual_battery_level
+      #       name: Reset / Set Level (kWh)
