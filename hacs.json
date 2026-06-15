@@ -1,5 +1,6 @@
 {
   "name": "Virtual Solar",
+  "homeassistant": "2024.1.0",
   "content_in_root": false,
   "filename": "virtual_solar.zip",
   "render_readme": true

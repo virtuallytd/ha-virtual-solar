@@ -23,3 +23,5 @@ jobs:
       - uses: hacs/action@main
         with:
           category: integration
+          # Drop "brands" once the icon PR to home-assistant/brands is merged.
+          ignore: brands
