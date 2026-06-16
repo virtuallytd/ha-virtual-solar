@@ -3,6 +3,27 @@
 All notable changes to this project are documented here. Release notes
 are also published on the [GitHub Releases page](https://github.com/virtuallytd/ha-virtual-solar/releases).
 
+## 0.5.2 (2026-06-16)
+
+**Added**: integration ships its own brand icon.
+
+Home Assistant 2026.3.0 introduced a [brands proxy API](https://developers.home-assistant.io/blog/2026/02/24/brands-proxy-api)
+that lets custom integrations ship their icon directly in the
+`custom_components/<domain>/brand/` directory instead of going through
+the `home-assistant/brands` repo. The integration now includes:
+
+- `custom_components/virtual_solar/brand/icon.png` (256×256)
+- `custom_components/virtual_solar/brand/icon@2x.png` (512×512)
+
+Artwork: sun above a tilted solar panel with a lightning bolt below,
+yellow strokes on a dark-green background.
+
+HA / HACS pick these up automatically on next install or upgrade.
+No manifest changes required.
+
+Also dropped the `ignore: brands` workaround from the CI workflow now
+that the brands check passes via the local files.
+
 ## 0.4.3 (2026-06-15)
 
 **Fixed**: `virtual_solar.get_dashboard` now returns the dashboard
