@@ -1,5 +1,7 @@
 # Virtual Solar
 
+![Virtual Solar](docs/images/banner.png)
+
 A [Home Assistant](https://www.home-assistant.io/) custom integration that
 simulates a solar panel + battery system from sensors you already own. Use it
 to answer "would a balcony solar setup actually be worth it?" before spending
@@ -132,6 +134,8 @@ the entity IDs you picked in the config flow.
 
 If you change anything in the integration's **Configure** dialog or
 adjust a slider, re-run the service to regenerate.
+
+![The auto-generated Virtual Solar dashboard](docs/images/dashboard.png)
 
 ### Option B: static template
 
