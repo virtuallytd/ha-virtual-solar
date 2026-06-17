@@ -131,7 +131,7 @@ class PanelCount(_RestoreNumber):
     _attr_name = "Panel count"
     _attr_icon = "mdi:solar-panel-large"
     _attr_native_min_value = 1
-    _attr_native_max_value = 20
+    _attr_native_max_value = 60
     _attr_native_step = 1
 
     def __init__(self, entry: ConfigEntry, config: dict[str, Any]) -> None:

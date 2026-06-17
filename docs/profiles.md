@@ -47,7 +47,7 @@ back to the integration's built-in defaults (500 W panel, 1 panel,
 | `max_charge_rate_w` | W | 100 – 15000 | Max watts the battery can absorb. |
 | `max_discharge_rate_w` | W | 100 – 15000 | Max watts the battery/inverter can supply. Often equal to charge rate; sometimes higher (e.g. EcoFlow DELTA 2: 500/1800). |
 | `panel_wattage` | W | 100 – 800 | Rated wattage of a single panel. |
-| `panel_count` | integer | 1 – 20 | Default number of panels in the array. |
+| `panel_count` | integer | 1 – 60 | Default number of panels in the array. |
 | `system_efficiency_pct` | % | 50 – 100 | Combined inverter + wiring + thermal losses. ~95 % is a reasonable default for most kits. |
 
 ## Worked example: EcoFlow DELTA 2

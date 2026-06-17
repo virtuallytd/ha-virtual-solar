@@ -3,6 +3,14 @@
 All notable changes to this project are documented here. Release notes
 are also published on the [GitHub Releases page](https://github.com/virtuallytd/ha-virtual-solar/releases).
 
+## 0.5.3 (2026-06-17)
+
+**Changed**: panel count cap raised from 20 to 60 to allow larger
+residential and small-commercial array sizing. Existing entries with
+values 1–20 are unaffected. Closes [#1](https://github.com/virtuallytd/ha-virtual-solar/issues/1).
+
+Thanks to Reddit user [Western_Employer_513](https://www.reddit.com/user/Western_Employer_513/) for the feature request.
+
 ## 0.5.2 (2026-06-16)
 
 **Added**: integration ships its own brand icon.

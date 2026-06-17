@@ -76,7 +76,7 @@ to fill everything manually.
 | Field | Range | Default |
 |---|---|---|
 | **Panel wattage (W)** | 100 – 800, step 10 | 500 |
-| **Number of panels** | 1 – 20, step 1 | 1 |
+| **Number of panels** | 1 – 60, step 1 | 1 |
 
 ### Step 4: Virtual battery
 
@@ -97,7 +97,7 @@ sliders on the dashboard, so you don't need to open Configure to tweak them.
 | Entity ID | Unit | Notes |
 |---|---|---|
 | `sensor.virtual_solar_estimated_output` | W | `device_class: power`, `state_class: measurement`. Updates whenever lux, panel count, panel wattage, or system efficiency changes. |
-| `number.virtual_solar_panel_count` | (none) | How many panels to simulate (1 – 20). Live-editable via the dashboard slider. Drives `estimated_output`. |
+| `number.virtual_solar_panel_count` | (none) | How many panels to simulate (1 – 60). Live-editable via the dashboard slider. Drives `estimated_output`. |
 | `number.virtual_solar_panel_wattage` | W | Rated wattage of a single panel (100 – 800). Live-editable. Drives `estimated_output`. |
 | `number.virtual_solar_battery_capacity` | kWh | Total battery capacity (0.1 – 100). Live-editable. The battery level slider auto-resizes when you change it. |
 | `number.virtual_solar_system_efficiency` | % | Combined inverter + wiring + thermal losses (50 – 100). Live-editable. Applied as a multiplier on solar output before any other calculation. |

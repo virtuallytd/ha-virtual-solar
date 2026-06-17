@@ -103,7 +103,7 @@ def _panel_schema(defaults: dict[str, Any]) -> vol.Schema:
             ): selector.NumberSelector(
                 selector.NumberSelectorConfig(
                     min=1,
-                    max=20,
+                    max=60,
                     step=1,
                     mode=selector.NumberSelectorMode.BOX,
                 ),
