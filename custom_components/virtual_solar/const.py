@@ -33,6 +33,7 @@ STATUS_ENTITY_ID = "sensor.virtual_solar_battery_status"
 PERCENTAGE_ENTITY_ID = "sensor.virtual_solar_battery_percentage"
 CHARGE_RATE_ENTITY_ID = "sensor.virtual_solar_battery_charge_rate"
 TIME_TO_FULL_ENTITY_ID = "sensor.virtual_solar_battery_time_to_full"
+GRID_EXPORT_ENTITY_ID = "sensor.virtual_solar_grid_export"
 
 STATE_CHARGING = "Charging"
 STATE_DISCHARGING = "Discharging"

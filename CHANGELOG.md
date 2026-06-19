@@ -3,6 +3,23 @@
 All notable changes to this project are documented here. Release notes
 are also published on the [GitHub Releases page](https://github.com/virtuallytd/ha-virtual-solar/releases).
 
+## 0.6.0 (2026-06-19)
+
+**Added**: `sensor.virtual_solar_grid_export` (W, `device_class: power`).
+
+Reports the solar surplus that couldn't go into the battery this tick,
+either because the battery is at capacity or because `solar - house`
+exceeded the configured max charge rate. In a real setup, that energy
+would flow back to the grid or be wasted by an inverter that prevents
+export. Tracking it lets you tell whether more panels would actually
+generate more usable energy or just produce more overflow.
+
+Returns 0 when the battery can absorb all the net solar, `None` when
+lux / house / battery capacity are unavailable.
+
+Auto-generated dashboard now shows the new sensor in the
+"Current Status" card. Closes [#2](https://github.com/virtuallytd/ha-virtual-solar/issues/2).
+
 ## 0.5.3 (2026-06-17)
 
 **Changed**: panel count cap raised from 20 to 60 to allow larger

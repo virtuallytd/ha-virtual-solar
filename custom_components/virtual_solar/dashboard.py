@@ -13,6 +13,7 @@ from .const import (
     CONF_LUX_SENSOR,
     CONF_PANEL_COUNT,
     CONF_PANEL_WATTAGE,
+    GRID_EXPORT_ENTITY_ID,
     OUTPUT_ENTITY_ID,
     PANEL_COUNT_ENTITY_ID,
     PANEL_WATTAGE_ENTITY_ID,
@@ -86,6 +87,10 @@ def build_dashboard(config: dict[str, Any]) -> dict[str, Any]:
                             {
                                 "entity": CHARGE_RATE_ENTITY_ID,
                                 "name": "Net Battery Flow",
+                            },
+                            {
+                                "entity": GRID_EXPORT_ENTITY_ID,
+                                "name": "Grid Export",
                             },
                             {
                                 "entity": lux,

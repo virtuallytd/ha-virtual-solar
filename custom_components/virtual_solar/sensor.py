@@ -37,6 +37,7 @@ from .const import (
     STATE_EMPTY,
     STATE_FULL,
     SYSTEM_EFFICIENCY_ENTITY_ID,
+    TICK_INTERVAL_SECONDS,
 )
 from .util import (
     device_info,
@@ -62,6 +63,7 @@ async def async_setup_entry(
             BatteryChargeRateSensor(entry, config),
             BatteryTimeToFullSensor(entry, config),
             BatteryStatusSensor(entry, config),
+            GridExportSensor(entry, config),
         ]
     )
 
@@ -324,6 +326,97 @@ class BatteryTimeToFullSensor(SensorEntity):
         h = int(hours)
         m = int((hours - h) * 60)
         self._attr_native_value = f"{h}h {m}m"
+
+
+class GridExportSensor(SensorEntity):
+    """Solar surplus that couldn't go into the battery this tick.
+
+    Fires when either: the battery is at capacity and there's nowhere
+    to put the energy, or the raw `solar - house` exceeds the
+    configured `max_charge_rate`. In a real setup that energy would
+    either flow back to the grid or be wasted by an inverter that
+    prevents export.
+    """
+
+    _attr_has_entity_name = True
+    _attr_name = "Grid export"
+    _attr_device_class = SensorDeviceClass.POWER
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_native_unit_of_measurement = UnitOfPower.WATT
+    _attr_icon = "mdi:transmission-tower-export"
+    _attr_should_poll = False
+    _attr_suggested_display_precision = 1
+
+    def __init__(self, entry: ConfigEntry, config: dict[str, Any]) -> None:
+        self._entry = entry
+        self._lux_entity: str = config[CONF_LUX_SENSOR]
+        self._house_entity: str = config[CONF_HOUSE_CONSUMPTION_SENSOR]
+        self._fallback_wattage = float(config[CONF_PANEL_WATTAGE])
+        self._fallback_count = float(config[CONF_PANEL_COUNT])
+        self._fallback_capacity = float(config[CONF_BATTERY_CAPACITY])
+        self._fallback_efficiency_pct = float(
+            config.get(CONF_SYSTEM_EFFICIENCY, DEFAULT_SYSTEM_EFFICIENCY)
+        )
+        self._max_charge_rate = float(
+            config.get(CONF_MAX_CHARGE_RATE, DEFAULT_MAX_CHARGE_RATE)
+        )
+        self._attr_unique_id = f"{entry.entry_id}_grid_export"
+        self._attr_device_info = device_info(entry)
+        self._attr_native_value: float | None = None
+
+    async def async_added_to_hass(self) -> None:
+        self.async_on_remove(
+            async_track_state_change_event(
+                self.hass,
+                [
+                    self._lux_entity,
+                    self._house_entity,
+                    BATTERY_LEVEL_ENTITY_ID,
+                    BATTERY_CAPACITY_ENTITY_ID,
+                    PANEL_WATTAGE_ENTITY_ID,
+                    PANEL_COUNT_ENTITY_ID,
+                    SYSTEM_EFFICIENCY_ENTITY_ID,
+                ],
+                self._handle_change,
+            )
+        )
+        self._recalculate()
+
+    @callback
+    def _handle_change(self, _event: Event[EventStateChangedData]) -> None:
+        self._recalculate()
+        self.async_write_ha_state()
+
+    @callback
+    def _recalculate(self) -> None:
+        lux = _read(self.hass, self._lux_entity)
+        house = _read(self.hass, self._house_entity)
+        level = _read(self.hass, BATTERY_LEVEL_ENTITY_ID)
+        capacity = read_capacity(self.hass, self._fallback_capacity)
+        wattage, count = read_panel_config(
+            self.hass, self._fallback_wattage, self._fallback_count
+        )
+        efficiency = read_system_efficiency(
+            self.hass, self._fallback_efficiency_pct
+        )
+        solar = estimate_output(lux, wattage, count, efficiency)
+
+        if solar is None or house is None or level is None or capacity <= 0:
+            self._attr_native_value = None
+            return
+
+        raw_net = solar - house
+        if raw_net <= 0:
+            self._attr_native_value = 0.0
+            return
+
+        # How much W the battery can absorb in one tick, given remaining headroom.
+        headroom_kwh = max(capacity - level, 0.0)
+        headroom_w = headroom_kwh * 1000.0 * 3600.0 / TICK_INTERVAL_SECONDS
+
+        actual_charge = min(raw_net, self._max_charge_rate, headroom_w)
+        grid_export = max(raw_net - actual_charge, 0.0)
+        self._attr_native_value = round(grid_export, 1)
 
 
 class BatteryStatusSensor(SensorEntity):
