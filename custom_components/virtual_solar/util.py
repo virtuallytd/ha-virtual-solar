@@ -9,6 +9,7 @@ from typing import Any
 import yaml
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.device_registry import DeviceEntryType
 from homeassistant.helpers.entity import DeviceInfo
 
@@ -29,6 +30,24 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 _PROFILES_PATH = pathlib.Path(__file__).parent / "profiles.yaml"
 _PROFILES_CACHE: list[dict[str, Any]] | None = None
+
+
+def sibling_entity_id(
+    hass: HomeAssistant, entry_id: str, key: str
+) -> str | None:
+    """Return the entity_id of a sibling entity in the same config entry.
+
+    Sibling entities have unique_ids of the form `f"{entry_id}_{key}"`.
+    The lookup goes through the entity registry so it stays correct across
+    renames, entity_id changes, and multi-instance suffixing. Returns
+    None if the sibling isn't yet registered (which can happen briefly
+    during platform setup).
+    """
+    registry = er.async_get(hass)
+    unique_id = f"{entry_id}_{key}"
+    return registry.async_get_entity_id(
+        "number", DOMAIN, unique_id
+    ) or registry.async_get_entity_id("sensor", DOMAIN, unique_id)
 
 
 def safe_float(value: Any) -> float | None:
