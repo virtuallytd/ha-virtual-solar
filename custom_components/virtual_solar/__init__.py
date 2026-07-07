@@ -31,8 +31,16 @@ SERVICE_GET_DASHBOARD = "get_dashboard"
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up Virtual Solar from a config entry."""
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    """Set up Virtual Solar from a config entry.
+
+    Platforms are set up sequentially (number before sensor) so that the
+    sensors can resolve their sibling number entities via the entity
+    registry when they first run `async_added_to_hass`. This matters
+    because several sensors read live values from number entities in the
+    same config entry.
+    """
+    await hass.config_entries.async_forward_entry_setups(entry, [Platform.NUMBER])
+    await hass.config_entries.async_forward_entry_setups(entry, [Platform.SENSOR])
     entry.async_on_unload(entry.add_update_listener(_async_options_updated))
     _async_register_services(hass)
     return True

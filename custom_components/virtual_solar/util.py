@@ -14,17 +14,11 @@ from homeassistant.helpers.device_registry import DeviceEntryType
 from homeassistant.helpers.entity import DeviceInfo
 
 from .const import (
-    BATTERY_CAPACITY_ENTITY_ID,
     CONF_BATTERY_CAPACITY,
     CONF_SYSTEM_EFFICIENCY,
-    DEFAULT_BATTERY_CAPACITY,
-    DEFAULT_SYSTEM_EFFICIENCY,
     DOMAIN,
     LUX_PER_WM2,
-    PANEL_COUNT_ENTITY_ID,
-    PANEL_WATTAGE_ENTITY_ID,
     STC_IRRADIANCE,
-    SYSTEM_EFFICIENCY_ENTITY_ID,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -83,30 +77,41 @@ def estimate_output(
     return raw * efficiency
 
 
+def _read_sibling_float(
+    hass: HomeAssistant, entry_id: str, key: str
+) -> float | None:
+    entity_id = sibling_entity_id(hass, entry_id, key)
+    if entity_id is None:
+        return None
+    state = hass.states.get(entity_id)
+    return safe_float(state.state) if state else None
+
+
 def read_panel_config(
-    hass: HomeAssistant, fallback_wattage: float, fallback_count: float
+    hass: HomeAssistant,
+    entry_id: str,
+    fallback_wattage: float,
+    fallback_count: float,
 ) -> tuple[float, float]:
-    """Return (panel_wattage, panel_count) from the number entities."""
-    wattage_state = hass.states.get(PANEL_WATTAGE_ENTITY_ID)
-    count_state = hass.states.get(PANEL_COUNT_ENTITY_ID)
-    wattage = safe_float(wattage_state.state) if wattage_state else None
-    count = safe_float(count_state.state) if count_state else None
+    """Return (panel_wattage, panel_count) from this entry's number entities."""
+    wattage = _read_sibling_float(hass, entry_id, "panel_wattage")
+    count = _read_sibling_float(hass, entry_id, "panel_count")
     return (
         wattage if wattage is not None else fallback_wattage,
         count if count is not None else fallback_count,
     )
 
 
-def read_capacity(hass: HomeAssistant, fallback: float) -> float:
-    state = hass.states.get(BATTERY_CAPACITY_ENTITY_ID)
-    cap = safe_float(state.state) if state else None
+def read_capacity(hass: HomeAssistant, entry_id: str, fallback: float) -> float:
+    cap = _read_sibling_float(hass, entry_id, "battery_capacity")
     return cap if cap is not None else fallback
 
 
-def read_system_efficiency(hass: HomeAssistant, fallback_pct: float) -> float:
+def read_system_efficiency(
+    hass: HomeAssistant, entry_id: str, fallback_pct: float
+) -> float:
     """Return system efficiency as a 0-1 multiplier (entity is stored as %)."""
-    state = hass.states.get(SYSTEM_EFFICIENCY_ENTITY_ID)
-    pct = safe_float(state.state) if state else None
+    pct = _read_sibling_float(hass, entry_id, "system_efficiency")
     if pct is None:
         pct = fallback_pct
     return pct / 100.0
