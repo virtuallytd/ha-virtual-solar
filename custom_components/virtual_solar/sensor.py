@@ -16,9 +16,6 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_state_change_event
 
 from .const import (
-    BATTERY_CAPACITY_ENTITY_ID,
-    BATTERY_LEVEL_ENTITY_ID,
-    CHARGE_RATE_ENTITY_ID,
     CONF_BATTERY_CAPACITY,
     CONF_HOUSE_CONSUMPTION_SENSOR,
     CONF_LUX_SENSOR,
@@ -30,13 +27,10 @@ from .const import (
     DEFAULT_MAX_CHARGE_RATE,
     DEFAULT_MAX_DISCHARGE_RATE,
     DEFAULT_SYSTEM_EFFICIENCY,
-    PANEL_COUNT_ENTITY_ID,
-    PANEL_WATTAGE_ENTITY_ID,
     STATE_CHARGING,
     STATE_DISCHARGING,
     STATE_EMPTY,
     STATE_FULL,
-    SYSTEM_EFFICIENCY_ENTITY_ID,
     TICK_INTERVAL_SECONDS,
 )
 from .util import (
@@ -46,6 +40,7 @@ from .util import (
     read_panel_config,
     read_system_efficiency,
     safe_float,
+    sibling_entity_id,
 )
 
 
@@ -72,9 +67,27 @@ def _clamp(value: float, lo: float, hi: float) -> float:
     return max(lo, min(hi, value))
 
 
-def _read(hass: HomeAssistant, entity_id: str) -> float | None:
+def _read(hass: HomeAssistant, entity_id: str | None) -> float | None:
+    if entity_id is None:
+        return None
     state = hass.states.get(entity_id)
     return safe_float(state.state) if state else None
+
+
+def _read_sibling(hass: HomeAssistant, entry_id: str, key: str) -> float | None:
+    return _read(hass, sibling_entity_id(hass, entry_id, key))
+
+
+def _resolve_siblings(
+    hass: HomeAssistant, entry_id: str, keys: list[str]
+) -> list[str]:
+    """Return entity_ids for each sibling `key` that's currently registered."""
+    resolved: list[str] = []
+    for key in keys:
+        eid = sibling_entity_id(hass, entry_id, key)
+        if eid:
+            resolved.append(eid)
+    return resolved
 
 
 class SolarOutputSensor(SensorEntity):
@@ -91,6 +104,7 @@ class SolarOutputSensor(SensorEntity):
 
     def __init__(self, entry: ConfigEntry, config: dict[str, Any]) -> None:
         self._entry = entry
+        self._entry_id = entry.entry_id
         self._lux_entity: str = config[CONF_LUX_SENSOR]
         self._fallback_wattage = float(config[CONF_PANEL_WATTAGE])
         self._fallback_count = float(config[CONF_PANEL_COUNT])
@@ -102,16 +116,14 @@ class SolarOutputSensor(SensorEntity):
         self._attr_native_value: float | None = None
 
     async def async_added_to_hass(self) -> None:
+        tracked = [self._lux_entity, *_resolve_siblings(
+            self.hass,
+            self._entry_id,
+            ["panel_wattage", "panel_count", "system_efficiency"],
+        )]
         self.async_on_remove(
             async_track_state_change_event(
-                self.hass,
-                [
-                    self._lux_entity,
-                    PANEL_WATTAGE_ENTITY_ID,
-                    PANEL_COUNT_ENTITY_ID,
-                    SYSTEM_EFFICIENCY_ENTITY_ID,
-                ],
-                self._handle_change,
+                self.hass, tracked, self._handle_change
             )
         )
         self._recalculate()
@@ -125,10 +137,10 @@ class SolarOutputSensor(SensorEntity):
     def _recalculate(self) -> None:
         lux = _read(self.hass, self._lux_entity)
         wattage, count = read_panel_config(
-            self.hass, self._fallback_wattage, self._fallback_count
+            self.hass, self._entry_id, self._fallback_wattage, self._fallback_count
         )
         efficiency = read_system_efficiency(
-            self.hass, self._fallback_efficiency_pct
+            self.hass, self._entry_id, self._fallback_efficiency_pct
         )
         watts = estimate_output(lux, wattage, count, efficiency)
         self._attr_native_value = None if watts is None else round(watts, 1)
@@ -147,6 +159,7 @@ class BatteryPercentageSensor(SensorEntity):
 
     def __init__(self, entry: ConfigEntry, config: dict[str, Any]) -> None:
         self._entry = entry
+        self._entry_id = entry.entry_id
         self._fallback_capacity = float(config[CONF_BATTERY_CAPACITY])
         self._attr_unique_id = f"{entry.entry_id}_battery_percentage"
         self._attr_device_info = device_info(entry)
@@ -154,11 +167,12 @@ class BatteryPercentageSensor(SensorEntity):
         self._attr_icon = "mdi:battery"
 
     async def async_added_to_hass(self) -> None:
+        tracked = _resolve_siblings(
+            self.hass, self._entry_id, ["battery_level", "battery_capacity"]
+        )
         self.async_on_remove(
             async_track_state_change_event(
-                self.hass,
-                [BATTERY_LEVEL_ENTITY_ID, BATTERY_CAPACITY_ENTITY_ID],
-                self._handle_change,
+                self.hass, tracked, self._handle_change
             )
         )
         self._recalculate()
@@ -170,8 +184,10 @@ class BatteryPercentageSensor(SensorEntity):
 
     @callback
     def _recalculate(self) -> None:
-        level = _read(self.hass, BATTERY_LEVEL_ENTITY_ID)
-        capacity = read_capacity(self.hass, self._fallback_capacity)
+        level = _read_sibling(self.hass, self._entry_id, "battery_level")
+        capacity = read_capacity(
+            self.hass, self._entry_id, self._fallback_capacity
+        )
         if level is None or capacity <= 0:
             self._attr_native_value = None
             return
@@ -195,11 +211,7 @@ def _battery_icon(pct: float) -> str:
 
 
 class BatteryChargeRateSensor(SensorEntity):
-    """Net W flowing into (positive) or out of (negative) the battery.
-
-    Equals `clamp(solar - house, -max_discharge_rate, +max_charge_rate)`,
-    where `solar` already includes system efficiency losses.
-    """
+    """Net W flowing into (positive) or out of (negative) the battery."""
 
     _attr_has_entity_name = True
     _attr_name = "Battery charge rate"
@@ -211,6 +223,7 @@ class BatteryChargeRateSensor(SensorEntity):
 
     def __init__(self, entry: ConfigEntry, config: dict[str, Any]) -> None:
         self._entry = entry
+        self._entry_id = entry.entry_id
         self._lux_entity: str = config[CONF_LUX_SENSOR]
         self._house_entity: str = config[CONF_HOUSE_CONSUMPTION_SENSOR]
         self._fallback_wattage = float(config[CONF_PANEL_WATTAGE])
@@ -230,17 +243,18 @@ class BatteryChargeRateSensor(SensorEntity):
         self._attr_icon = "mdi:battery-arrow-up"
 
     async def async_added_to_hass(self) -> None:
+        tracked = [
+            self._lux_entity,
+            self._house_entity,
+            *_resolve_siblings(
+                self.hass,
+                self._entry_id,
+                ["panel_wattage", "panel_count", "system_efficiency"],
+            ),
+        ]
         self.async_on_remove(
             async_track_state_change_event(
-                self.hass,
-                [
-                    self._lux_entity,
-                    self._house_entity,
-                    PANEL_WATTAGE_ENTITY_ID,
-                    PANEL_COUNT_ENTITY_ID,
-                    SYSTEM_EFFICIENCY_ENTITY_ID,
-                ],
-                self._handle_change,
+                self.hass, tracked, self._handle_change
             )
         )
         self._recalculate()
@@ -255,10 +269,10 @@ class BatteryChargeRateSensor(SensorEntity):
         lux = _read(self.hass, self._lux_entity)
         house = _read(self.hass, self._house_entity)
         wattage, count = read_panel_config(
-            self.hass, self._fallback_wattage, self._fallback_count
+            self.hass, self._entry_id, self._fallback_wattage, self._fallback_count
         )
         efficiency = read_system_efficiency(
-            self.hass, self._fallback_efficiency_pct
+            self.hass, self._entry_id, self._fallback_efficiency_pct
         )
         solar = estimate_output(lux, wattage, count, efficiency)
         if solar is None or house is None:
@@ -283,21 +297,21 @@ class BatteryTimeToFullSensor(SensorEntity):
 
     def __init__(self, entry: ConfigEntry, config: dict[str, Any]) -> None:
         self._entry = entry
+        self._entry_id = entry.entry_id
         self._fallback_capacity = float(config[CONF_BATTERY_CAPACITY])
         self._attr_unique_id = f"{entry.entry_id}_battery_time_to_full"
         self._attr_device_info = device_info(entry)
         self._attr_native_value: str | None = None
 
     async def async_added_to_hass(self) -> None:
+        tracked = _resolve_siblings(
+            self.hass,
+            self._entry_id,
+            ["battery_level", "battery_capacity", "battery_charge_rate"],
+        )
         self.async_on_remove(
             async_track_state_change_event(
-                self.hass,
-                [
-                    BATTERY_LEVEL_ENTITY_ID,
-                    BATTERY_CAPACITY_ENTITY_ID,
-                    CHARGE_RATE_ENTITY_ID,
-                ],
-                self._handle_change,
+                self.hass, tracked, self._handle_change
             )
         )
         self._recalculate()
@@ -309,9 +323,11 @@ class BatteryTimeToFullSensor(SensorEntity):
 
     @callback
     def _recalculate(self) -> None:
-        level = _read(self.hass, BATTERY_LEVEL_ENTITY_ID)
-        rate_w = _read(self.hass, CHARGE_RATE_ENTITY_ID)
-        capacity = read_capacity(self.hass, self._fallback_capacity)
+        level = _read_sibling(self.hass, self._entry_id, "battery_level")
+        rate_w = _read_sibling(self.hass, self._entry_id, "battery_charge_rate")
+        capacity = read_capacity(
+            self.hass, self._entry_id, self._fallback_capacity
+        )
         if level is None:
             self._attr_native_value = None
             return
@@ -329,14 +345,7 @@ class BatteryTimeToFullSensor(SensorEntity):
 
 
 class GridExportSensor(SensorEntity):
-    """Solar surplus that couldn't go into the battery this tick.
-
-    Fires when either: the battery is at capacity and there's nowhere
-    to put the energy, or the raw `solar - house` exceeds the
-    configured `max_charge_rate`. In a real setup that energy would
-    either flow back to the grid or be wasted by an inverter that
-    prevents export.
-    """
+    """Solar surplus that couldn't go into the battery this tick."""
 
     _attr_has_entity_name = True
     _attr_name = "Grid export"
@@ -349,6 +358,7 @@ class GridExportSensor(SensorEntity):
 
     def __init__(self, entry: ConfigEntry, config: dict[str, Any]) -> None:
         self._entry = entry
+        self._entry_id = entry.entry_id
         self._lux_entity: str = config[CONF_LUX_SENSOR]
         self._house_entity: str = config[CONF_HOUSE_CONSUMPTION_SENSOR]
         self._fallback_wattage = float(config[CONF_PANEL_WATTAGE])
@@ -365,19 +375,24 @@ class GridExportSensor(SensorEntity):
         self._attr_native_value: float | None = None
 
     async def async_added_to_hass(self) -> None:
+        tracked = [
+            self._lux_entity,
+            self._house_entity,
+            *_resolve_siblings(
+                self.hass,
+                self._entry_id,
+                [
+                    "battery_level",
+                    "battery_capacity",
+                    "panel_wattage",
+                    "panel_count",
+                    "system_efficiency",
+                ],
+            ),
+        ]
         self.async_on_remove(
             async_track_state_change_event(
-                self.hass,
-                [
-                    self._lux_entity,
-                    self._house_entity,
-                    BATTERY_LEVEL_ENTITY_ID,
-                    BATTERY_CAPACITY_ENTITY_ID,
-                    PANEL_WATTAGE_ENTITY_ID,
-                    PANEL_COUNT_ENTITY_ID,
-                    SYSTEM_EFFICIENCY_ENTITY_ID,
-                ],
-                self._handle_change,
+                self.hass, tracked, self._handle_change
             )
         )
         self._recalculate()
@@ -391,13 +406,15 @@ class GridExportSensor(SensorEntity):
     def _recalculate(self) -> None:
         lux = _read(self.hass, self._lux_entity)
         house = _read(self.hass, self._house_entity)
-        level = _read(self.hass, BATTERY_LEVEL_ENTITY_ID)
-        capacity = read_capacity(self.hass, self._fallback_capacity)
+        level = _read_sibling(self.hass, self._entry_id, "battery_level")
+        capacity = read_capacity(
+            self.hass, self._entry_id, self._fallback_capacity
+        )
         wattage, count = read_panel_config(
-            self.hass, self._fallback_wattage, self._fallback_count
+            self.hass, self._entry_id, self._fallback_wattage, self._fallback_count
         )
         efficiency = read_system_efficiency(
-            self.hass, self._fallback_efficiency_pct
+            self.hass, self._entry_id, self._fallback_efficiency_pct
         )
         solar = estimate_output(lux, wattage, count, efficiency)
 
@@ -428,6 +445,7 @@ class BatteryStatusSensor(SensorEntity):
 
     def __init__(self, entry: ConfigEntry, config: dict[str, Any]) -> None:
         self._entry = entry
+        self._entry_id = entry.entry_id
         self._lux_entity: str = config[CONF_LUX_SENSOR]
         self._house_entity: str = config[CONF_HOUSE_CONSUMPTION_SENSOR]
         self._fallback_wattage = float(config[CONF_PANEL_WATTAGE])
@@ -442,19 +460,24 @@ class BatteryStatusSensor(SensorEntity):
         self._attr_icon = "mdi:battery"
 
     async def async_added_to_hass(self) -> None:
+        tracked = [
+            self._lux_entity,
+            self._house_entity,
+            *_resolve_siblings(
+                self.hass,
+                self._entry_id,
+                [
+                    "battery_level",
+                    "battery_capacity",
+                    "panel_wattage",
+                    "panel_count",
+                    "system_efficiency",
+                ],
+            ),
+        ]
         self.async_on_remove(
             async_track_state_change_event(
-                self.hass,
-                [
-                    self._lux_entity,
-                    self._house_entity,
-                    BATTERY_LEVEL_ENTITY_ID,
-                    BATTERY_CAPACITY_ENTITY_ID,
-                    PANEL_WATTAGE_ENTITY_ID,
-                    PANEL_COUNT_ENTITY_ID,
-                    SYSTEM_EFFICIENCY_ENTITY_ID,
-                ],
-                self._handle_change,
+                self.hass, tracked, self._handle_change
             )
         )
         self._recalculate()
@@ -468,13 +491,15 @@ class BatteryStatusSensor(SensorEntity):
     def _recalculate(self) -> None:
         lux = _read(self.hass, self._lux_entity)
         house = _read(self.hass, self._house_entity)
-        level = _read(self.hass, BATTERY_LEVEL_ENTITY_ID)
-        capacity = read_capacity(self.hass, self._fallback_capacity)
+        level = _read_sibling(self.hass, self._entry_id, "battery_level")
+        capacity = read_capacity(
+            self.hass, self._entry_id, self._fallback_capacity
+        )
         wattage, count = read_panel_config(
-            self.hass, self._fallback_wattage, self._fallback_count
+            self.hass, self._entry_id, self._fallback_wattage, self._fallback_count
         )
         efficiency = read_system_efficiency(
-            self.hass, self._fallback_efficiency_pct
+            self.hass, self._entry_id, self._fallback_efficiency_pct
         )
         solar = estimate_output(lux, wattage, count, efficiency)
         pct = (

@@ -9,26 +9,39 @@ from typing import Any
 import yaml
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.device_registry import DeviceEntryType
 from homeassistant.helpers.entity import DeviceInfo
 
 from .const import (
-    BATTERY_CAPACITY_ENTITY_ID,
     CONF_BATTERY_CAPACITY,
     CONF_SYSTEM_EFFICIENCY,
-    DEFAULT_BATTERY_CAPACITY,
-    DEFAULT_SYSTEM_EFFICIENCY,
     DOMAIN,
     LUX_PER_WM2,
-    PANEL_COUNT_ENTITY_ID,
-    PANEL_WATTAGE_ENTITY_ID,
     STC_IRRADIANCE,
-    SYSTEM_EFFICIENCY_ENTITY_ID,
 )
 
 _LOGGER = logging.getLogger(__name__)
 _PROFILES_PATH = pathlib.Path(__file__).parent / "profiles.yaml"
 _PROFILES_CACHE: list[dict[str, Any]] | None = None
+
+
+def sibling_entity_id(
+    hass: HomeAssistant, entry_id: str, key: str
+) -> str | None:
+    """Return the entity_id of a sibling entity in the same config entry.
+
+    Sibling entities have unique_ids of the form `f"{entry_id}_{key}"`.
+    The lookup goes through the entity registry so it stays correct across
+    renames, entity_id changes, and multi-instance suffixing. Returns
+    None if the sibling isn't yet registered (which can happen briefly
+    during platform setup).
+    """
+    registry = er.async_get(hass)
+    unique_id = f"{entry_id}_{key}"
+    return registry.async_get_entity_id(
+        "number", DOMAIN, unique_id
+    ) or registry.async_get_entity_id("sensor", DOMAIN, unique_id)
 
 
 def safe_float(value: Any) -> float | None:
@@ -43,7 +56,7 @@ def safe_float(value: Any) -> float | None:
 def device_info(entry: ConfigEntry) -> DeviceInfo:
     return DeviceInfo(
         identifiers={(DOMAIN, entry.entry_id)},
-        name="Virtual Solar",
+        name=entry.title or "Virtual Solar",
         manufacturer="virtuallytd",
         model="Virtual Solar",
         entry_type=DeviceEntryType.SERVICE,
@@ -64,30 +77,41 @@ def estimate_output(
     return raw * efficiency
 
 
+def _read_sibling_float(
+    hass: HomeAssistant, entry_id: str, key: str
+) -> float | None:
+    entity_id = sibling_entity_id(hass, entry_id, key)
+    if entity_id is None:
+        return None
+    state = hass.states.get(entity_id)
+    return safe_float(state.state) if state else None
+
+
 def read_panel_config(
-    hass: HomeAssistant, fallback_wattage: float, fallback_count: float
+    hass: HomeAssistant,
+    entry_id: str,
+    fallback_wattage: float,
+    fallback_count: float,
 ) -> tuple[float, float]:
-    """Return (panel_wattage, panel_count) from the number entities."""
-    wattage_state = hass.states.get(PANEL_WATTAGE_ENTITY_ID)
-    count_state = hass.states.get(PANEL_COUNT_ENTITY_ID)
-    wattage = safe_float(wattage_state.state) if wattage_state else None
-    count = safe_float(count_state.state) if count_state else None
+    """Return (panel_wattage, panel_count) from this entry's number entities."""
+    wattage = _read_sibling_float(hass, entry_id, "panel_wattage")
+    count = _read_sibling_float(hass, entry_id, "panel_count")
     return (
         wattage if wattage is not None else fallback_wattage,
         count if count is not None else fallback_count,
     )
 
 
-def read_capacity(hass: HomeAssistant, fallback: float) -> float:
-    state = hass.states.get(BATTERY_CAPACITY_ENTITY_ID)
-    cap = safe_float(state.state) if state else None
+def read_capacity(hass: HomeAssistant, entry_id: str, fallback: float) -> float:
+    cap = _read_sibling_float(hass, entry_id, "battery_capacity")
     return cap if cap is not None else fallback
 
 
-def read_system_efficiency(hass: HomeAssistant, fallback_pct: float) -> float:
+def read_system_efficiency(
+    hass: HomeAssistant, entry_id: str, fallback_pct: float
+) -> float:
     """Return system efficiency as a 0-1 multiplier (entity is stored as %)."""
-    state = hass.states.get(SYSTEM_EFFICIENCY_ENTITY_ID)
-    pct = safe_float(state.state) if state else None
+    pct = _read_sibling_float(hass, entry_id, "system_efficiency")
     if pct is None:
         pct = fallback_pct
     return pct / 100.0

@@ -2,9 +2,10 @@
   "config": {
     "step": {
       "user": {
-        "title": "Pick a profile",
-        "description": "Start from a preset for a known kit, or choose Custom to fill everything in manually. You can change every value after setup.",
+        "title": "New Virtual Solar setup",
+        "description": "Give this setup a name, then pick a profile for a known kit (or Custom to fill everything in manually). You can add more setups later to compare configurations in parallel.",
         "data": {
+          "name": "Setup name",
           "profile": "Profile"
         }
       },

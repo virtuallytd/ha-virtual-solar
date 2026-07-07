@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import Platform
+from homeassistant.const import CONF_NAME, Platform
 from homeassistant.core import (
     HomeAssistant,
     ServiceCall,
@@ -31,8 +31,16 @@ SERVICE_GET_DASHBOARD = "get_dashboard"
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up Virtual Solar from a config entry."""
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    """Set up Virtual Solar from a config entry.
+
+    Platforms are set up sequentially (number before sensor) so that the
+    sensors can resolve their sibling number entities via the entity
+    registry when they first run `async_added_to_hass`. This matters
+    because several sensors read live values from number entities in the
+    same config entry.
+    """
+    await hass.config_entries.async_forward_entry_setups(entry, [Platform.NUMBER])
+    await hass.config_entries.async_forward_entry_setups(entry, [Platform.SENSOR])
     entry.async_on_unload(entry.add_update_listener(_async_options_updated))
     _async_register_services(hass)
     return True
@@ -57,6 +65,11 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         data.setdefault(CONF_MAX_DISCHARGE_RATE, existing_rate)
         data.setdefault(CONF_SYSTEM_EFFICIENCY, DEFAULT_SYSTEM_EFFICIENCY)
         version = 3
+    if version == 3:
+        # v4 introduces multi-instance support. Existing entries need a
+        # name in data so the sensors and dashboard can reference it.
+        data.setdefault(CONF_NAME, entry.title or "Virtual Solar")
+        version = 4
     if version != entry.version:
         hass.config_entries.async_update_entry(entry, data=data, version=version)
     return True
@@ -76,12 +89,18 @@ def _async_register_services(hass: HomeAssistant) -> None:
         entries = hass.config_entries.async_entries(DOMAIN)
         if not entries:
             raise HomeAssistantError("Virtual Solar is not configured.")
-        entry = entries[0]
-        config: dict[str, Any] = {**entry.data, **entry.options}
-        # Return the dashboard config dict directly so the response shown in
-        # Developer Tools -> Actions IS the dashboard YAML, ready to paste
-        # into the Raw configuration editor without any field extraction.
-        return build_dashboard(config)
+
+        # Optional entry_id: return just that entry's dashboard.
+        # Omitted: return a combined dashboard with one view per entry.
+        entry_id = call.data.get("entry_id") if call.data else None
+        if entry_id:
+            selected = [e for e in entries if e.entry_id == entry_id]
+            if not selected:
+                raise HomeAssistantError(
+                    f"No Virtual Solar entry found with id {entry_id!r}."
+                )
+            return build_dashboard(hass, selected)
+        return build_dashboard(hass, entries)
 
     hass.services.async_register(
         DOMAIN,

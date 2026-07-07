@@ -3,6 +3,29 @@
 All notable changes to this project are documented here. Release notes
 are also published on the [GitHub Releases page](https://github.com/virtuallytd/ha-virtual-solar/releases).
 
+## 0.7.0 (2026-06-19)
+
+**Added**: multiple Virtual Solar setups can now run in parallel.
+
+The setup wizard's first step gains a **Setup name** field. Each name
+becomes the device title and the entity-ID prefix for that setup.
+Different names can coexist; the slugified name is used as the config
+entry's unique ID, so two setups can't share a title.
+
+Two Virtual Solar setups pointed at the same lux and house sensors let
+you A/B compare panel configurations, battery sizes, or system
+efficiencies against the same real-world conditions.
+
+**Under the hood**: sensors and number entities now resolve their
+sibling entity IDs per config entry via the entity registry, instead
+of relying on the hardcoded `number.virtual_solar_*` entity IDs.
+Existing single-setup installs migrate transparently (their entities
+keep their current IDs). Closes [#3](https://github.com/virtuallytd/ha-virtual-solar/issues/3).
+
+**Dashboard**: `virtual_solar.get_dashboard` now returns a dashboard
+covering every setup by default, with one view (tab) per setup. Pass
+`entry_id` to get just one setup's YAML.
+
 ## 0.6.0 (2026-06-19)
 
 **Added**: `sensor.virtual_solar_grid_export` (W, `device_class: power`).

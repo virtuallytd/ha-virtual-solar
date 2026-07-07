@@ -6,10 +6,11 @@ from typing import Any
 
 import voluptuous as vol
 from homeassistant import config_entries
-from homeassistant.const import PERCENTAGE
+from homeassistant.const import CONF_NAME, PERCENTAGE
 from homeassistant.core import callback
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import selector
+from homeassistant.util import slugify
 
 from .const import (
     CONF_BATTERY_CAPACITY,
@@ -49,6 +50,7 @@ def _profile_schema(profiles: list[dict[str, Any]]) -> vol.Schema:
     ] or [selector.SelectOptionDict(value="custom", label="Custom (no preset)")]
     return vol.Schema(
         {
+            vol.Required(CONF_NAME, default="Virtual Solar"): str,
             vol.Required(CONF_PROFILE, default="custom"): selector.SelectSelector(
                 selector.SelectSelectorConfig(
                     options=options,
@@ -187,22 +189,27 @@ def _profile_by_id(
 class VirtualSolarConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Initial setup flow."""
 
-    VERSION = 3
+    VERSION = 4
 
     def __init__(self) -> None:
         self._data: dict[str, Any] = {}
+        self._name: str = "Virtual Solar"
         self._profile: dict[str, Any] | None = None
         self._profiles: list[dict[str, Any]] = []
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-        await self.async_set_unique_id(DOMAIN)
-        self._abort_if_unique_id_configured()
         if not self._profiles:
             self._profiles = await async_load_profiles(self.hass)
         if user_input is not None:
+            self._name = user_input[CONF_NAME].strip() or "Virtual Solar"
+            # Use the slugified name as unique_id so two setups can't share
+            # a title (which would collide their device names and entity IDs).
+            await self.async_set_unique_id(slugify(self._name))
+            self._abort_if_unique_id_configured()
             self._profile = _profile_by_id(self._profiles, user_input[CONF_PROFILE])
+            self._data[CONF_NAME] = self._name
             return await self.async_step_sensors()
         return self.async_show_form(
             step_id="user", data_schema=_profile_schema(self._profiles)
@@ -234,7 +241,7 @@ class VirtualSolarConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     ) -> FlowResult:
         if user_input is not None:
             self._data.update(user_input)
-            return self.async_create_entry(title="Virtual Solar", data=self._data)
+            return self.async_create_entry(title=self._name, data=self._data)
         defaults = apply_profile_defaults(self._profile, {})
         return self.async_show_form(
             step_id="battery", data_schema=_battery_schema(defaults)
