@@ -89,12 +89,18 @@ def _async_register_services(hass: HomeAssistant) -> None:
         entries = hass.config_entries.async_entries(DOMAIN)
         if not entries:
             raise HomeAssistantError("Virtual Solar is not configured.")
-        entry = entries[0]
-        config: dict[str, Any] = {**entry.data, **entry.options}
-        # Return the dashboard config dict directly so the response shown in
-        # Developer Tools -> Actions IS the dashboard YAML, ready to paste
-        # into the Raw configuration editor without any field extraction.
-        return build_dashboard(config)
+
+        # Optional entry_id: return just that entry's dashboard.
+        # Omitted: return a combined dashboard with one view per entry.
+        entry_id = call.data.get("entry_id") if call.data else None
+        if entry_id:
+            selected = [e for e in entries if e.entry_id == entry_id]
+            if not selected:
+                raise HomeAssistantError(
+                    f"No Virtual Solar entry found with id {entry_id!r}."
+                )
+            return build_dashboard(hass, selected)
+        return build_dashboard(hass, entries)
 
     hass.services.async_register(
         DOMAIN,

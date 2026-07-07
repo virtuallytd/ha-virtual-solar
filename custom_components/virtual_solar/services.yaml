@@ -2,5 +2,17 @@ get_dashboard:
   name: Get dashboard YAML
   description: >
     Returns a Lovelace dashboard config pre-populated with the entity IDs
-    from your Virtual Solar config entry. Copy the entire response and
-    paste it into a new dashboard's Raw configuration editor.
+    from your Virtual Solar setup(s). Copy the entire response and paste
+    it into a new dashboard's Raw configuration editor. With multiple
+    Virtual Solar setups, each becomes a view (tab) in the dashboard;
+    pass entry_id to get just one.
+  fields:
+    entry_id:
+      name: Setup entry ID
+      description: >
+        Config entry ID of a specific Virtual Solar setup. If omitted,
+        the returned dashboard includes one view per setup.
+      required: false
+      example: 8f3a4d5e6c7b8a9d1e2f3a4b5c6d7e8f
+      selector:
+        text:
