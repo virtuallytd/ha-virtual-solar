@@ -59,10 +59,13 @@ inline comments for the schema. PRs welcome.
 
 All configuration is done through the UI. The setup wizard has four steps:
 
-### Step 1: Profile
+### Step 1: Setup name + profile
 
-A dropdown of preset kits. Pick one to prefill the next steps, or "Custom"
-to fill everything manually.
+Give the setup a name (used as the device title, and as the entity_id
+prefix) and pick a profile for a known kit (or "Custom" to fill
+everything in manually). You can add multiple Virtual Solar setups
+against the same lux and house sensors to compare configurations
+side-by-side. Names must be unique.
 
 ### Step 2: Sensors
 
@@ -91,6 +94,15 @@ After install, the **Configure** dialog only edits sensors and battery/inverter
 specs (charge rate, discharge rate, efficiency, capacity). Panel count, panel
 wattage, battery capacity, and system efficiency are also live-editable as
 sliders on the dashboard, so you don't need to open Configure to tweak them.
+
+### Multiple setups
+
+To compare two configurations in parallel, install the integration a
+second time from **Add Integration** with a different setup name. Both
+setups can share the same lux and house sensors while running their
+own independent panel / battery configurations. The `get_dashboard`
+service returns a single dashboard covering every setup (one tab per
+setup) by default; pass an `entry_id` to get just one setup's YAML.
 
 ## Entities produced
 
