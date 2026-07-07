@@ -56,7 +56,7 @@ def safe_float(value: Any) -> float | None:
 def device_info(entry: ConfigEntry) -> DeviceInfo:
     return DeviceInfo(
         identifiers={(DOMAIN, entry.entry_id)},
-        name="Virtual Solar",
+        name=entry.title or "Virtual Solar",
         manufacturer="virtuallytd",
         model="Virtual Solar",
         entry_type=DeviceEntryType.SERVICE,
