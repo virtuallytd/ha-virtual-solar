@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import Platform
+from homeassistant.const import CONF_NAME, Platform
 from homeassistant.core import (
     HomeAssistant,
     ServiceCall,
@@ -65,6 +65,11 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         data.setdefault(CONF_MAX_DISCHARGE_RATE, existing_rate)
         data.setdefault(CONF_SYSTEM_EFFICIENCY, DEFAULT_SYSTEM_EFFICIENCY)
         version = 3
+    if version == 3:
+        # v4 introduces multi-instance support. Existing entries need a
+        # name in data so the sensors and dashboard can reference it.
+        data.setdefault(CONF_NAME, entry.title or "Virtual Solar")
+        version = 4
     if version != entry.version:
         hass.config_entries.async_update_entry(entry, data=data, version=version)
     return True
