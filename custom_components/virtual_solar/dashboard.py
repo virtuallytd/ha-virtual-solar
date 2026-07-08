@@ -16,6 +16,7 @@ from .const import (
     CONF_LUX_SENSOR,
     CONF_PANEL_COUNT,
     CONF_PANEL_WATTAGE,
+    DISCHARGE_ENABLED_ENTITY_ID,
     GRID_EXPORT_ENTITY_ID,
     OUTPUT_ENTITY_ID,
     PANEL_COUNT_ENTITY_ID,
@@ -42,6 +43,7 @@ _FALLBACK: dict[str, str] = {
     "panel_count": PANEL_COUNT_ENTITY_ID,
     "panel_wattage": PANEL_WATTAGE_ENTITY_ID,
     "system_efficiency": SYSTEM_EFFICIENCY_ENTITY_ID,
+    "discharge_enabled": DISCHARGE_ENABLED_ENTITY_ID,
 }
 
 
@@ -131,6 +133,10 @@ def _build_view(hass: HomeAssistant, entry: ConfigEntry) -> dict[str, Any]:
                         "name": "Time to Full",
                     },
                     {"entity": eid("battery_capacity"), "name": "Capacity"},
+                    {
+                        "entity": eid("discharge_enabled"),
+                        "name": "Discharge enabled",
+                    },
                 ],
             },
             {

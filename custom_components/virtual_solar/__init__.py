@@ -25,7 +25,7 @@ from .const import (
 )
 from .dashboard import build_dashboard
 
-PLATFORMS: list[Platform] = [Platform.NUMBER, Platform.SENSOR]
+PLATFORMS: list[Platform] = [Platform.SWITCH, Platform.NUMBER, Platform.SENSOR]
 
 SERVICE_GET_DASHBOARD = "get_dashboard"
 
@@ -39,6 +39,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     because several sensors read live values from number entities in the
     same config entry.
     """
+    await hass.config_entries.async_forward_entry_setups(entry, [Platform.SWITCH])
     await hass.config_entries.async_forward_entry_setups(entry, [Platform.NUMBER])
     await hass.config_entries.async_forward_entry_setups(entry, [Platform.SENSOR])
     entry.async_on_unload(entry.add_update_listener(_async_options_updated))

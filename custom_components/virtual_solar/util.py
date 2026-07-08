@@ -117,6 +117,21 @@ def read_system_efficiency(
     return pct / 100.0
 
 
+def read_discharge_enabled(hass: HomeAssistant, entry_id: str) -> bool:
+    """Return True if the battery is allowed to discharge, False if held.
+
+    Defaults to True when the switch isn't registered yet (during
+    initial setup) so existing behaviour is preserved.
+    """
+    entity_id = sibling_entity_id(hass, entry_id, "discharge_enabled")
+    if entity_id is None:
+        return True
+    state = hass.states.get(entity_id)
+    if state is None:
+        return True
+    return state.state == "on"
+
+
 def _load_profiles_sync() -> list[dict[str, Any]]:
     try:
         text = _PROFILES_PATH.read_text(encoding="utf-8")

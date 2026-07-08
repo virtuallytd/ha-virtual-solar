@@ -48,6 +48,7 @@ from .util import (
     device_info,
     estimate_output,
     read_capacity,
+    read_discharge_enabled,
     read_panel_config,
     read_system_efficiency,
     safe_float,
@@ -251,10 +252,16 @@ class VirtualBatteryLevel(_RestoreNumber):
             return
 
         capacity = read_capacity(self.hass, self._entry_id, self._fallback_capacity)
-        net_w = _clamp(
-            solar - house, -self._max_discharge_rate, self._max_charge_rate
+        net_w = solar - house
+        # If discharge is disabled and the house is drawing more than solar
+        # is producing, the battery holds its charge and the grid covers the
+        # shortfall. Charging (net_w > 0) is unaffected.
+        if net_w < 0 and not read_discharge_enabled(self.hass, self._entry_id):
+            net_w = 0
+        net_w_clamped = _clamp(
+            net_w, -self._max_discharge_rate, self._max_charge_rate
         )
-        delta_kwh = net_w * (TICK_INTERVAL_SECONDS / 3600.0) / 1000.0
+        delta_kwh = net_w_clamped * (TICK_INTERVAL_SECONDS / 3600.0) / 1000.0
         self._attr_native_value = round(
             _clamp(self._attr_native_value + delta_kwh, 0.0, capacity), 4
         )

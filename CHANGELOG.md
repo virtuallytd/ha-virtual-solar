@@ -3,6 +3,27 @@
 All notable changes to this project are documented here. Release notes
 are also published on the [GitHub Releases page](https://github.com/virtuallytd/ha-virtual-solar/releases).
 
+## 0.8.0 (2026-07-08)
+
+**Added**: `switch.virtual_solar_discharge_enabled` (default on).
+
+Controls whether the virtual battery discharges when house demand
+exceeds solar. When off, the battery holds its charge and the house is
+served entirely from the grid. Charging (solar surplus filling the
+battery) is unaffected.
+
+Useful for time-of-use tariff simulations: an automation can turn the
+switch off overnight (when grid electricity is cheap) to preserve the
+battery for the daytime peak-price window.
+
+A new `Holding` value is added to `sensor.virtual_solar_battery_status`
+for the case where discharge is disabled and the house is drawing more
+than solar produces. `sensor.virtual_solar_battery_charge_rate` reads
+0 in that state to reflect the actual (rather than desired) battery
+flow.
+
+Closes [#4](https://github.com/virtuallytd/ha-virtual-solar/issues/4).
+
 ## 0.7.0 (2026-06-19)
 
 **Added**: multiple Virtual Solar setups can now run in parallel.

@@ -118,13 +118,15 @@ setup) by default; pass an `entry_id` to get just one setup's YAML.
 | `sensor.virtual_solar_battery_charge_rate` | W | `device_class: power`. Net flow into (positive) or out of (negative) the battery, clamped at the configured max rate. Icon flips between `mdi:battery-arrow-up` and `mdi:battery-arrow-down`. |
 | `sensor.virtual_solar_grid_export` | W | `device_class: power`. Solar surplus that couldn't go into the battery this tick (battery full, or `solar - house` exceeds max charge rate). 0 when the battery can absorb all the net solar. |
 | `sensor.virtual_solar_battery_time_to_full` | n/a | Human-readable countdown like `2h 15m`, or `Full` / `No solar input` when those apply. |
-| `sensor.virtual_solar_battery_status` | n/a | Enum: `Charging`, `Discharging`, `Full`, `Empty`. Action wins over condition (a 0% battery being charged shows `Charging`). Icon updates to match. |
+| `sensor.virtual_solar_battery_status` | n/a | Enum: `Charging`, `Discharging`, `Full`, `Empty`, `Holding`. Action wins over condition (a 0% battery being charged shows `Charging`). Icon updates to match. |
+| `switch.virtual_solar_discharge_enabled` | on/off | Controls whether the battery discharges when the house draws more than solar. Default on. Turn off to hold the charge and let the grid cover house demand (useful for time-of-use tariff automations). |
 
 Battery status rules (action takes precedence over condition):
 
 - `solar > house` and capacity reached (`>= 99%`) → **Full**
 - `solar > house` → **Charging**
 - `solar <= house` and battery near empty (`< 5%`) → **Empty**
+- `solar <= house` and `discharge_enabled` is off → **Holding**
 - Otherwise → **Discharging**
 
 ## Sample dashboard

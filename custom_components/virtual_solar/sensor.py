@@ -31,12 +31,14 @@ from .const import (
     STATE_DISCHARGING,
     STATE_EMPTY,
     STATE_FULL,
+    STATE_HOLDING,
     TICK_INTERVAL_SECONDS,
 )
 from .util import (
     device_info,
     estimate_output,
     read_capacity,
+    read_discharge_enabled,
     read_panel_config,
     read_system_efficiency,
     safe_float,
@@ -249,7 +251,12 @@ class BatteryChargeRateSensor(SensorEntity):
             *_resolve_siblings(
                 self.hass,
                 self._entry_id,
-                ["panel_wattage", "panel_count", "system_efficiency"],
+                [
+                    "panel_wattage",
+                    "panel_count",
+                    "system_efficiency",
+                    "discharge_enabled",
+                ],
             ),
         ]
         self.async_on_remove(
@@ -278,9 +285,11 @@ class BatteryChargeRateSensor(SensorEntity):
         if solar is None or house is None:
             self._attr_native_value = None
             return
-        net_w = _clamp(
-            solar - house, -self._max_discharge_rate, self._max_charge_rate
-        )
+        net_w = solar - house
+        # Mirror the ticker: discharge switch off + net negative = battery holds.
+        if net_w < 0 and not read_discharge_enabled(self.hass, self._entry_id):
+            net_w = 0
+        net_w = _clamp(net_w, -self._max_discharge_rate, self._max_charge_rate)
         self._attr_native_value = round(net_w, 1)
         self._attr_icon = (
             "mdi:battery-arrow-up" if net_w >= 0 else "mdi:battery-arrow-down"
@@ -472,6 +481,7 @@ class BatteryStatusSensor(SensorEntity):
                     "panel_wattage",
                     "panel_count",
                     "system_efficiency",
+                    "discharge_enabled",
                 ],
             ),
         ]
@@ -502,6 +512,7 @@ class BatteryStatusSensor(SensorEntity):
             self.hass, self._entry_id, self._fallback_efficiency_pct
         )
         solar = estimate_output(lux, wattage, count, efficiency)
+        discharge_enabled = read_discharge_enabled(self.hass, self._entry_id)
         pct = (
             (level / capacity * 100.0)
             if (level is not None and capacity > 0)
@@ -517,6 +528,8 @@ class BatteryStatusSensor(SensorEntity):
         else:
             if pct is not None and pct < 5:
                 state, icon = STATE_EMPTY, "mdi:battery-alert"
+            elif not discharge_enabled:
+                state, icon = STATE_HOLDING, "mdi:battery-lock"
             else:
                 state, icon = STATE_DISCHARGING, "mdi:battery-minus"
 
