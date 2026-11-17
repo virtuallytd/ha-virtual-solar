@@ -36,12 +36,16 @@ def sibling_entity_id(
     renames, entity_id changes, and multi-instance suffixing. Returns
     None if the sibling isn't yet registered (which can happen briefly
     during platform setup).
+
+    Every platform this integration sets up must be listed here, or its
+    entities can never be found by their siblings.
     """
     registry = er.async_get(hass)
     unique_id = f"{entry_id}_{key}"
-    return registry.async_get_entity_id(
-        "number", DOMAIN, unique_id
-    ) or registry.async_get_entity_id("sensor", DOMAIN, unique_id)
+    for domain in ("number", "sensor", "switch"):
+        if entity_id := registry.async_get_entity_id(domain, DOMAIN, unique_id):
+            return entity_id
+    return None
 
 
 def safe_float(value: Any) -> float | None:

@@ -3,6 +3,21 @@
 All notable changes to this project are documented here. Release notes
 are also published on the [GitHub Releases page](https://github.com/virtuallytd/ha-virtual-solar/releases).
 
+## 0.8.1 (2026-11-17)
+
+**Fixed**: `switch.virtual_solar_discharge_enabled` now actually
+controls the battery. In 0.8.0 the switch was never found by the
+other entities, so the battery kept discharging when it was off,
+`sensor.virtual_solar_battery_status` never showed `Holding`, and the
+generated dashboard pointed at the wrong switch for any setup not
+named "Virtual Solar".
+
+If you turned the switch off in 0.8.0 and left it off, the battery
+will start holding its charge after upgrading. Turn the switch back
+on if you want it to discharge.
+
+Closes [#10](https://github.com/virtuallytd/ha-virtual-solar/issues/10).
+
 ## 0.8.0 (2026-07-08)
 
 **Added**: `switch.virtual_solar_discharge_enabled` (default on).
