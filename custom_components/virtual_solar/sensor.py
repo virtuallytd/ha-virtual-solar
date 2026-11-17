@@ -230,6 +230,7 @@ class BatteryChargeRateSensor(SensorEntity):
         self._house_entity: str = config[CONF_HOUSE_CONSUMPTION_SENSOR]
         self._fallback_wattage = float(config[CONF_PANEL_WATTAGE])
         self._fallback_count = float(config[CONF_PANEL_COUNT])
+        self._fallback_capacity = float(config[CONF_BATTERY_CAPACITY])
         self._fallback_efficiency_pct = float(
             config.get(CONF_SYSTEM_EFFICIENCY, DEFAULT_SYSTEM_EFFICIENCY)
         )
@@ -252,6 +253,8 @@ class BatteryChargeRateSensor(SensorEntity):
                 self.hass,
                 self._entry_id,
                 [
+                    "battery_level",
+                    "battery_capacity",
                     "panel_wattage",
                     "panel_count",
                     "system_efficiency",
@@ -290,6 +293,20 @@ class BatteryChargeRateSensor(SensorEntity):
         if net_w < 0 and not read_discharge_enabled(self.hass, self._entry_id):
             net_w = 0
         net_w = _clamp(net_w, -self._max_discharge_rate, self._max_charge_rate)
+        # Mirror the ticker's clamp to [0, capacity]: an empty battery can't
+        # discharge and a full one can't charge, so cap the rate at what the
+        # battery can actually supply or absorb in one tick.
+        level = _read_sibling(self.hass, self._entry_id, "battery_level")
+        if level is not None:
+            capacity = read_capacity(
+                self.hass, self._entry_id, self._fallback_capacity
+            )
+            w_per_kwh = 1000.0 * 3600.0 / TICK_INTERVAL_SECONDS
+            stored_w = max(level, 0.0) * w_per_kwh
+            headroom_w = max(capacity - level, 0.0) * w_per_kwh
+            # `or 0.0` turns -0.0 (empty battery) into 0.0 so it doesn't
+            # display as "-0.0 W".
+            net_w = _clamp(net_w, -stored_w, headroom_w) or 0.0
         self._attr_native_value = round(net_w, 1)
         self._attr_icon = (
             "mdi:battery-arrow-up" if net_w >= 0 else "mdi:battery-arrow-down"

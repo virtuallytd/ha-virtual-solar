@@ -115,7 +115,7 @@ setup) by default; pass an `entry_id` to get just one setup's YAML.
 | `number.virtual_solar_system_efficiency` | % | Combined inverter + wiring + thermal losses (50 – 100). Live-editable. Applied as a multiplier on solar output before any other calculation. |
 | `number.virtual_solar_battery_level` | kWh | The virtual battery's current stored energy. Ticks every minute. User-editable for manual resets. Survives HA restarts. |
 | `sensor.virtual_solar_battery_percentage` | % | `device_class: battery`. `(level / capacity) * 100` with a dynamic icon that tracks charge level. |
-| `sensor.virtual_solar_battery_charge_rate` | W | `device_class: power`. Net flow into (positive) or out of (negative) the battery, clamped at the configured max rate. Icon flips between `mdi:battery-arrow-up` and `mdi:battery-arrow-down`. |
+| `sensor.virtual_solar_battery_charge_rate` | W | `device_class: power`. Net flow into (positive) or out of (negative) the battery, clamped at the configured max rate. Reads 0 when the battery is empty and the house draws more than solar, or full and solar exceeds the house. Icon flips between `mdi:battery-arrow-up` and `mdi:battery-arrow-down`. |
 | `sensor.virtual_solar_grid_export` | W | `device_class: power`. Solar surplus that couldn't go into the battery this tick (battery full, or `solar - house` exceeds max charge rate). 0 when the battery can absorb all the net solar. |
 | `sensor.virtual_solar_battery_time_to_full` | n/a | Human-readable countdown like `2h 15m`, or `Full` / `No solar input` when those apply. |
 | `sensor.virtual_solar_battery_status` | n/a | Enum: `Charging`, `Discharging`, `Full`, `Empty`, `Holding`. Action wins over condition (a 0% battery being charged shows `Charging`). Icon updates to match. |
