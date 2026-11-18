@@ -3,7 +3,7 @@
 All notable changes to this project are documented here. Release notes
 are also published on the [GitHub Releases page](https://github.com/virtuallytd/ha-virtual-solar/releases).
 
-## 0.8.1 (2026-11-17)
+## 0.8.1 (2026-11-18)
 
 **Fixed**: `switch.virtual_solar_discharge_enabled` now actually
 controls the battery. In 0.8.0 the switch was never found by the
@@ -17,6 +17,14 @@ will start holding its charge after upgrading. Turn the switch back
 on if you want it to discharge.
 
 Closes [#10](https://github.com/virtuallytd/ha-virtual-solar/issues/10).
+
+**Fixed**: `sensor.virtual_solar_battery_charge_rate` no longer reports
+a negative rate once the battery is empty, or a positive rate once it
+is full. The sensor now takes the battery level into account, so it
+reads 0 W when the battery can't supply or absorb any more energy,
+matching what the battery level actually does.
+
+Closes [#9](https://github.com/virtuallytd/ha-virtual-solar/issues/9).
 
 ## 0.8.0 (2026-07-08)
 
