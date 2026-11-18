@@ -101,7 +101,12 @@ Maintainers only.
 2. Update [`CHANGELOG.md`](CHANGELOG.md) with the new version block.
 3. Commit, push.
 4. Tag: `git tag -a vX.Y.Z -m "vX.Y.Z" && git push origin vX.Y.Z`
-5. Publish a GitHub Release referencing the changelog block.
+
+Pushing the tag runs [`.github/workflows/release.yml`](.github/workflows/release.yml),
+which checks the tag matches the manifest version and publishes a
+GitHub Release using that version's changelog block as the notes. To
+release an existing tag, run the workflow manually from the Actions
+tab and enter the tag.
 
 ## Reporting issues
 
