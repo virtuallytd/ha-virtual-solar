@@ -72,7 +72,7 @@ side-by-side. Names must be unique.
 | Field | What to pick |
 |---|---|
 | **Ambient light sensor** | A `sensor` entity with `device_class: illuminance`, reporting lux. Outdoor sensors give the best results. |
-| **House consumption sensor** | A `sensor` entity with `device_class: power`, reporting your whole-house instantaneous draw in W. |
+| **House consumption sensor** | A `sensor` entity with `device_class: power`, reporting your whole-house instantaneous draw in W or kW. |
 
 ### Step 3: Solar panels
 
@@ -90,10 +90,9 @@ side-by-side. Names must be unique.
 | **Max discharge rate (W)** | 100 – 15000, step 50 | 1200 |
 | **System efficiency (%)** | 50 – 100, step 1 | 95 |
 
-After install, the **Configure** dialog only edits sensors and battery/inverter
-specs (charge rate, discharge rate, efficiency, capacity). Panel count, panel
-wattage, battery capacity, and system efficiency are also live-editable as
-sliders on the dashboard, so you don't need to open Configure to tweak them.
+After install, the **Configure** dialog only edits the sensors and the max
+charge and discharge rates. Panel count, panel wattage, battery capacity, and
+system efficiency are live-editable as sliders on the dashboard instead.
 
 ### Multiple setups
 

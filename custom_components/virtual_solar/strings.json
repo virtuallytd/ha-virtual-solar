@@ -37,13 +37,19 @@
       }
     },
     "abort": {
-      "already_configured": "Virtual Solar is already configured."
+      "already_configured": "A Virtual Solar setup with this name already exists. Pick a different name."
     }
   },
   "services": {
     "get_dashboard": {
       "name": "Get dashboard YAML",
-      "description": "Returns a Lovelace dashboard config pre-populated with the entity IDs from your Virtual Solar config entry. Copy the entire response and paste it into a new dashboard's Raw configuration editor."
+      "description": "Returns a Lovelace dashboard config pre-populated with the entity IDs from your Virtual Solar setup(s). Copy the entire response and paste it into a new dashboard's Raw configuration editor. With multiple Virtual Solar setups, each becomes a view (tab) in the dashboard; pass entry_id to get just one.",
+      "fields": {
+        "entry_id": {
+          "name": "Setup entry ID",
+          "description": "Config entry ID of a specific Virtual Solar setup. If omitted, the returned dashboard includes one view per setup."
+        }
+      }
     }
   },
   "options": {
@@ -58,12 +64,10 @@
       },
       "battery": {
         "title": "Virtual battery",
-        "description": "Storage and inverter specs.",
+        "description": "Charge and discharge limits. Battery capacity and system efficiency are live, edit them from the dashboard.",
         "data": {
-          "battery_capacity": "Battery capacity (kWh)",
           "max_charge_rate": "Max charge rate (W)",
-          "max_discharge_rate": "Max discharge rate (W)",
-          "system_efficiency": "System efficiency (%)"
+          "max_discharge_rate": "Max discharge rate (W)"
         }
       }
     }

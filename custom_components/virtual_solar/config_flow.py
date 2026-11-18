@@ -114,67 +114,84 @@ def _panel_schema(defaults: dict[str, Any]) -> vol.Schema:
     )
 
 
-def _battery_schema(defaults: dict[str, Any]) -> vol.Schema:
-    return vol.Schema(
-        {
+def _battery_schema(
+    defaults: dict[str, Any], include_live_values: bool = True
+) -> vol.Schema:
+    """Battery step schema.
+
+    Battery capacity and system efficiency become live number entities
+    after setup, and those entities restore their own last value on
+    reload. The options flow passes `include_live_values=False` so it
+    doesn't offer fields whose changes would be ignored.
+    """
+    fields: dict[Any, Any] = {}
+    if include_live_values:
+        fields[
             vol.Required(
                 CONF_BATTERY_CAPACITY,
                 default=_with_default(
                     CONF_BATTERY_CAPACITY, defaults, DEFAULT_BATTERY_CAPACITY
                 ),
-            ): selector.NumberSelector(
-                selector.NumberSelectorConfig(
-                    min=0.1,
-                    max=100,
-                    step=0.01,
-                    unit_of_measurement="kWh",
-                    mode=selector.NumberSelectorMode.BOX,
-                ),
+            )
+        ] = selector.NumberSelector(
+            selector.NumberSelectorConfig(
+                min=0.1,
+                max=100,
+                step=0.01,
+                unit_of_measurement="kWh",
+                mode=selector.NumberSelectorMode.BOX,
             ),
-            vol.Required(
-                CONF_MAX_CHARGE_RATE,
-                default=_with_default(
-                    CONF_MAX_CHARGE_RATE, defaults, DEFAULT_MAX_CHARGE_RATE
-                ),
-            ): selector.NumberSelector(
-                selector.NumberSelectorConfig(
-                    min=100,
-                    max=15000,
-                    step=50,
-                    unit_of_measurement="W",
-                    mode=selector.NumberSelectorMode.BOX,
-                ),
+        )
+    fields[
+        vol.Required(
+            CONF_MAX_CHARGE_RATE,
+            default=_with_default(
+                CONF_MAX_CHARGE_RATE, defaults, DEFAULT_MAX_CHARGE_RATE
             ),
-            vol.Required(
-                CONF_MAX_DISCHARGE_RATE,
-                default=_with_default(
-                    CONF_MAX_DISCHARGE_RATE, defaults, DEFAULT_MAX_DISCHARGE_RATE
-                ),
-            ): selector.NumberSelector(
-                selector.NumberSelectorConfig(
-                    min=100,
-                    max=15000,
-                    step=50,
-                    unit_of_measurement="W",
-                    mode=selector.NumberSelectorMode.BOX,
-                ),
+        )
+    ] = selector.NumberSelector(
+        selector.NumberSelectorConfig(
+            min=100,
+            max=15000,
+            step=50,
+            unit_of_measurement="W",
+            mode=selector.NumberSelectorMode.BOX,
+        ),
+    )
+    fields[
+        vol.Required(
+            CONF_MAX_DISCHARGE_RATE,
+            default=_with_default(
+                CONF_MAX_DISCHARGE_RATE, defaults, DEFAULT_MAX_DISCHARGE_RATE
             ),
+        )
+    ] = selector.NumberSelector(
+        selector.NumberSelectorConfig(
+            min=100,
+            max=15000,
+            step=50,
+            unit_of_measurement="W",
+            mode=selector.NumberSelectorMode.BOX,
+        ),
+    )
+    if include_live_values:
+        fields[
             vol.Required(
                 CONF_SYSTEM_EFFICIENCY,
                 default=_with_default(
                     CONF_SYSTEM_EFFICIENCY, defaults, DEFAULT_SYSTEM_EFFICIENCY
                 ),
-            ): selector.NumberSelector(
-                selector.NumberSelectorConfig(
-                    min=50,
-                    max=100,
-                    step=1,
-                    unit_of_measurement=PERCENTAGE,
-                    mode=selector.NumberSelectorMode.BOX,
-                ),
+            )
+        ] = selector.NumberSelector(
+            selector.NumberSelectorConfig(
+                min=50,
+                max=100,
+                step=1,
+                unit_of_measurement=PERCENTAGE,
+                mode=selector.NumberSelectorMode.BOX,
             ),
-        }
-    )
+        )
+    return vol.Schema(fields)
 
 
 def _profile_by_id(
@@ -284,5 +301,6 @@ class VirtualSolarOptionsFlow(config_entries.OptionsFlow):
             self._data.update(user_input)
             return self.async_create_entry(title="", data=self._data)
         return self.async_show_form(
-            step_id="battery", data_schema=_battery_schema(self._defaults())
+            step_id="battery",
+            data_schema=_battery_schema(self._defaults(), include_live_values=False),
         )
