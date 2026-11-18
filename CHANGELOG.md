@@ -24,6 +24,12 @@ of the values from initial setup. Regenerating the dashboard after
 changing a slider now updates the gauge.
 Closes [#19](https://github.com/virtuallytd/ha-virtual-solar/issues/19).
 
+**Fixed**: adding a second setup with a name that's already in use now
+says so, instead of "Virtual Solar is already configured". The
+`get_dashboard` service description now covers multiple setups and the
+optional `entry_id` field.
+Closes [#16](https://github.com/virtuallytd/ha-virtual-solar/issues/16).
+
 ## 0.8.1 (2026-11-18)
 
 **Fixed**: `switch.virtual_solar_discharge_enabled` now actually
