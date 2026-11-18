@@ -1,6 +1,7 @@
 {
   "domain": "virtual_solar",
   "name": "Virtual Solar",
+  "categories": ["energy.solar_batteries"],
   "codeowners": ["@virtuallytd"],
   "config_flow": true,
   "documentation": "https://github.com/virtuallytd/ha-virtual-solar",
