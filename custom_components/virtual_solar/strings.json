@@ -58,12 +58,10 @@
       },
       "battery": {
         "title": "Virtual battery",
-        "description": "Storage and inverter specs.",
+        "description": "Charge and discharge limits. Battery capacity and system efficiency are live, edit them from the dashboard.",
         "data": {
-          "battery_capacity": "Battery capacity (kWh)",
           "max_charge_rate": "Max charge rate (W)",
-          "max_discharge_rate": "Max discharge rate (W)",
-          "system_efficiency": "System efficiency (%)"
+          "max_discharge_rate": "Max discharge rate (W)"
         }
       }
     }

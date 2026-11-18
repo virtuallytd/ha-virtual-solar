@@ -90,10 +90,9 @@ side-by-side. Names must be unique.
 | **Max discharge rate (W)** | 100 – 15000, step 50 | 1200 |
 | **System efficiency (%)** | 50 – 100, step 1 | 95 |
 
-After install, the **Configure** dialog only edits sensors and battery/inverter
-specs (charge rate, discharge rate, efficiency, capacity). Panel count, panel
-wattage, battery capacity, and system efficiency are also live-editable as
-sliders on the dashboard, so you don't need to open Configure to tweak them.
+After install, the **Configure** dialog only edits the sensors and the max
+charge and discharge rates. Panel count, panel wattage, battery capacity, and
+system efficiency are live-editable as sliders on the dashboard instead.
 
 ### Multiple setups
 

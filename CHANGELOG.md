@@ -11,6 +11,13 @@ converted to W. Previously the value was used as-is, so a reading of
 were all calculated as if the house was using almost nothing.
 Closes [#18](https://github.com/virtuallytd/ha-virtual-solar/issues/18).
 
+**Fixed**: the **Configure** dialog no longer offers battery capacity
+and system efficiency. Changes made there were saved but ignored,
+because the dashboard sliders for those values restore their own last
+value. Use the sliders to change them. Max charge and discharge rates
+are still edited in Configure.
+Closes [#17](https://github.com/virtuallytd/ha-virtual-solar/issues/17).
+
 ## 0.8.1 (2026-11-18)
 
 **Fixed**: `switch.virtual_solar_discharge_enabled` now actually
