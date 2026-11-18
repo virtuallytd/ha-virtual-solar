@@ -3,7 +3,7 @@
 All notable changes to this project are documented here. Release notes
 are also published on the [GitHub Releases page](https://github.com/virtuallytd/ha-virtual-solar/releases).
 
-## 0.8.2 (unreleased)
+## 0.8.2 (2026-11-18)
 
 **Fixed**: house consumption sensors that report in kW (or MW) are now
 converted to W. Previously the value was used as-is, so a reading of
