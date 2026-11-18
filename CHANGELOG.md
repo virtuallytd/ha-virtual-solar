@@ -18,6 +18,12 @@ value. Use the sliders to change them. Max charge and discharge rates
 are still edited in Configure.
 Closes [#17](https://github.com/virtuallytd/ha-virtual-solar/issues/17).
 
+**Fixed**: `virtual_solar.get_dashboard` now sizes the solar output
+gauge from the current panel wattage and panel count sliders, instead
+of the values from initial setup. Regenerating the dashboard after
+changing a slider now updates the gauge.
+Closes [#19](https://github.com/virtuallytd/ha-virtual-solar/issues/19).
+
 ## 0.8.1 (2026-11-18)
 
 **Fixed**: `switch.virtual_solar_discharge_enabled` now actually

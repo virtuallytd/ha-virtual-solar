@@ -26,7 +26,7 @@ from .const import (
     SYSTEM_EFFICIENCY_ENTITY_ID,
     TIME_TO_FULL_ENTITY_ID,
 )
-from .util import sibling_entity_id
+from .util import read_panel_config, sibling_entity_id
 
 # Fallback maps sibling keys to the entity_id used before multi-instance
 # support existed. If the entity registry lookup fails (e.g. during a
@@ -57,8 +57,14 @@ def _build_view(hass: HomeAssistant, entry: ConfigEntry) -> dict[str, Any]:
     config: dict[str, Any] = {**entry.data, **entry.options}
     lux = config[CONF_LUX_SENSOR]
     house = config[CONF_HOUSE_CONSUMPTION_SENSOR]
-    panel_wattage = float(config[CONF_PANEL_WATTAGE])
-    panel_count = float(config[CONF_PANEL_COUNT])
+    # Use the live slider values so regenerating after a change picks
+    # them up. The config values are only fallbacks.
+    panel_wattage, panel_count = read_panel_config(
+        hass,
+        entry.entry_id,
+        float(config[CONF_PANEL_WATTAGE]),
+        float(config[CONF_PANEL_COUNT]),
+    )
     max_output = max(int(panel_wattage * panel_count), 100)
     eid = lambda key: _e(hass, entry.entry_id, key)
 
