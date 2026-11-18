@@ -8,10 +8,13 @@ from typing import Any
 
 import yaml
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import ATTR_UNIT_OF_MEASUREMENT, UnitOfPower
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.device_registry import DeviceEntryType
 from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.util.unit_conversion import PowerConverter
 
 from .const import (
     CONF_BATTERY_CAPACITY,
@@ -55,6 +58,31 @@ def safe_float(value: Any) -> float | None:
         return float(value)
     except (TypeError, ValueError):
         return None
+
+
+def read_power_w(hass: HomeAssistant, entity_id: str | None) -> float | None:
+    """Return a power sensor's value in W, converting from its unit.
+
+    The config flow accepts any `device_class: power` sensor, which may
+    report in kW or MW. Sensors with no unit, or one PowerConverter
+    doesn't recognise, are assumed to already be in W.
+    """
+    if entity_id is None:
+        return None
+    state = hass.states.get(entity_id)
+    if state is None:
+        return None
+    value = safe_float(state.state)
+    if value is None:
+        return None
+    unit = state.attributes.get(ATTR_UNIT_OF_MEASUREMENT)
+    if unit in (None, UnitOfPower.WATT):
+        return value
+    try:
+        return PowerConverter.convert(value, unit, UnitOfPower.WATT)
+    except HomeAssistantError:
+        _LOGGER.debug("Unknown power unit %r on %s, assuming W", unit, entity_id)
+        return value
 
 
 def device_info(entry: ConfigEntry) -> DeviceInfo:

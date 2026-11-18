@@ -40,6 +40,7 @@ from .util import (
     read_capacity,
     read_discharge_enabled,
     read_panel_config,
+    read_power_w,
     read_system_efficiency,
     safe_float,
     sibling_entity_id,
@@ -277,7 +278,7 @@ class BatteryChargeRateSensor(SensorEntity):
     @callback
     def _recalculate(self) -> None:
         lux = _read(self.hass, self._lux_entity)
-        house = _read(self.hass, self._house_entity)
+        house = read_power_w(self.hass, self._house_entity)
         wattage, count = read_panel_config(
             self.hass, self._entry_id, self._fallback_wattage, self._fallback_count
         )
@@ -431,7 +432,7 @@ class GridExportSensor(SensorEntity):
     @callback
     def _recalculate(self) -> None:
         lux = _read(self.hass, self._lux_entity)
-        house = _read(self.hass, self._house_entity)
+        house = read_power_w(self.hass, self._house_entity)
         level = _read_sibling(self.hass, self._entry_id, "battery_level")
         capacity = read_capacity(
             self.hass, self._entry_id, self._fallback_capacity
@@ -517,7 +518,7 @@ class BatteryStatusSensor(SensorEntity):
     @callback
     def _recalculate(self) -> None:
         lux = _read(self.hass, self._lux_entity)
-        house = _read(self.hass, self._house_entity)
+        house = read_power_w(self.hass, self._house_entity)
         level = _read_sibling(self.hass, self._entry_id, "battery_level")
         capacity = read_capacity(
             self.hass, self._entry_id, self._fallback_capacity

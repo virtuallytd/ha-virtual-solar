@@ -50,6 +50,7 @@ from .util import (
     read_capacity,
     read_discharge_enabled,
     read_panel_config,
+    read_power_w,
     read_system_efficiency,
     safe_float,
     sibling_entity_id,
@@ -238,9 +239,8 @@ class VirtualBatteryLevel(_RestoreNumber):
     @callback
     def _tick(self, _now: datetime) -> None:
         lux_state = self.hass.states.get(self._lux_entity)
-        house_state = self.hass.states.get(self._house_entity)
         lux = safe_float(lux_state.state) if lux_state else None
-        house = safe_float(house_state.state) if house_state else None
+        house = read_power_w(self.hass, self._house_entity)
         wattage, count = read_panel_config(
             self.hass, self._entry_id, self._fallback_wattage, self._fallback_count
         )

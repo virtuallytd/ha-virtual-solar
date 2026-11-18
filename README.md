@@ -72,7 +72,7 @@ side-by-side. Names must be unique.
 | Field | What to pick |
 |---|---|
 | **Ambient light sensor** | A `sensor` entity with `device_class: illuminance`, reporting lux. Outdoor sensors give the best results. |
-| **House consumption sensor** | A `sensor` entity with `device_class: power`, reporting your whole-house instantaneous draw in W. |
+| **House consumption sensor** | A `sensor` entity with `device_class: power`, reporting your whole-house instantaneous draw in W or kW. |
 
 ### Step 3: Solar panels
 

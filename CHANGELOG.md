@@ -3,6 +3,14 @@
 All notable changes to this project are documented here. Release notes
 are also published on the [GitHub Releases page](https://github.com/virtuallytd/ha-virtual-solar/releases).
 
+## 0.8.2 (unreleased)
+
+**Fixed**: house consumption sensors that report in kW (or MW) are now
+converted to W. Previously the value was used as-is, so a reading of
+1.5 kW was treated as 1.5 W and the battery, grid export and status
+were all calculated as if the house was using almost nothing.
+Closes [#18](https://github.com/virtuallytd/ha-virtual-solar/issues/18).
+
 ## 0.8.1 (2026-11-18)
 
 **Fixed**: `switch.virtual_solar_discharge_enabled` now actually
